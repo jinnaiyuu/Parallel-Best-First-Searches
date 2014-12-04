@@ -9,6 +9,8 @@
  * \date 2008-11-03
  */
 
+#define ANALYZE_ORDER
+
 #include <assert.h>
 #include <math.h>
 #include <stdlib.h>
@@ -37,7 +39,7 @@ using namespace std;
  * the 1 tile, etc.
  */
 Tiles::Tiles(istream &in, string c)
-	: cost(get_cost_function_by_name(c))
+  : cost(get_cost_function_by_name(c)), globalOrder(0)
 {
 	unsigned int pos;
 	unsigned int g_blank = 0;
@@ -108,6 +110,8 @@ Tiles::Tiles(istream &in, string c)
 		fact_ary[i] = fact_ary[i - 1] * i;
 
 	goal = new TilesState(this, NULL, 0, 0, 0, g, g_blank);
+
+	log_node_order = new LogNodeOrder[32]; // Ad hoc
 }
 
 const vector<uint64_t> *Tiles::get_ones() const
@@ -174,12 +178,17 @@ vector<unsigned int> Tiles::child(const vector<unsigned int> *tiles,
 	return t;
 }
 
-
+vector<State *> *Tiles::expand(State *s)
+{
+  //  printf("Tiles::expand(State)\n");
+  expand(s, 0);
+}
 /**
  * Expand a state, giving its children.
  */
-vector<State *> *Tiles::expand(State *s)
+vector<State *> *Tiles::expand(State *s, int thread_id)
 {
+  //  printf("Tiles::expand(State, int) %d\n", thread_id);
 	TilesState *t = static_cast<TilesState *>(s);
 	Tiles *tiles_domain = static_cast<Tiles *>(t->get_domain());
 	TilesCostFunction &cost_fun = tiles_domain->cost;
@@ -189,13 +198,18 @@ vector<State *> *Tiles::expand(State *s)
 	unsigned int col = blank % width;
 	unsigned int row = blank / width;
 
-	// Global Node Expansion Order
+	/*
 	for (int i = 0; i < tiles->size(); ++i) {
 	  printf("%x", (*tiles)[i]);
 	}
 	printf("\n");        
-	log_node_order.addStateInfo(tiles, s->get_f());
-
+	printf("id = %d\n", thread_id);
+	*/
+	// Global Node Expansion Order
+#ifdef ANALYZE_ORDER
+	log_node_order[thread_id].addStateInfo(globalOrder.fetch_add(1),
+ tiles, s->get_f(), -1);
+#endif
        
 	TilesState *gp = static_cast<TilesState *>(s->get_parent());
 

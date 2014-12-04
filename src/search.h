@@ -38,8 +38,8 @@ public:
 	unsigned long get_generated(void) const;
 
 protected:
-	vector<State *> *expand(State *);
-
+      	vector<State *> *expand(State *);
+       	vector<State *> *expand(State *, int thread_id);
 	void set_expanded(unsigned long e);
 	void set_generated(unsigned long g);
 

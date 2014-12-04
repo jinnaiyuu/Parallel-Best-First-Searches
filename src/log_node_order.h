@@ -1,30 +1,31 @@
+#if !defined(_LOG_NODE_ORDER_H_)
+#define _LOG_NODE_ORDER_H_
+
 #include <vector>
 #include <atomic>
+#include <stdio.h>
 
 class LogNodeOrder {
 public:
-  LogNodeOrder() : globalOrder(0){};
-  void addStateInfo(uint64_t state, int fvalue = -1, int openlistSize = -1, 
-		    int thread_id = -1) {
-    StateInfo* newLog = new StateInfo(globalOrder.fetch_add(1), state, 
-				      fvalue, openlistSize, thread_id);
-    info.push_back(*newLog);
+  LogNodeOrder() {};
+  void addStateInfo(int globalOrder, uint64_t state, int fvalue = -1, int openlistSize = -1) {
+    
+    StateInfo* si = new StateInfo(globalOrder, state, fvalue, openlistSize);
+    info.push_back(*si);
   }
 
-  void addStateInfo(const vector<unsigned int> *state, int fvalue = -1, int openlistSize = -1, int thread_id = -1) {
-    uint64_t packedState = pack(state);
-    StateInfo* newLog = new StateInfo(globalOrder.fetch_add(1), packedState, 
-				      fvalue, openlistSize, thread_id);
-    info.push_back(*newLog);
+  void addStateInfo(int globalOrder, const vector<unsigned int> *state, int fvalue = -1, int openlistSize = -1) {
+    StateInfo* si = new StateInfo(globalOrder, pack(state), fvalue, openlistSize);
+    info.push_back(*si);
   }
 
 
   // This dump is not so well organized for compatibility.
-  void dumpAll() {
+  void dumpAll(int thread_id) {
     for (int i = 0; i < info.size(); ++i) {
       StateInfo st = info[i];
-      printf("%d %d %016lx %d %d\n", st.thread_id, st.globalOrder,
-	     st.state, st.fvalue, st.openlistSize);
+      printf("%d %d %016lx %f %d\n", thread_id, st.globalOrder,
+	     st.state, st.fvalue / 10000.0, st.openlistSize);
     }
   }
 
@@ -45,11 +46,13 @@ private:
     int openlistSize;
     int thread_id;
     StateInfo(int globalOrder_, uint64_t state_, int fvalue_,
-	      int openlistSize_, int thread_id_) :
+	      int openlistSize_) :
       globalOrder(globalOrder_), state(state_), fvalue(fvalue_),
-      openlistSize(openlistSize_), thread_id(thread_id_) {}
+      openlistSize(openlistSize_) {
+      //      printf("expd %d\n", globalOrder);
+    }
   };
-  std::atomic<int> globalOrder;
   std::vector<StateInfo> info;
-
 };
+
+#endif /* !_LOG_NODE_ORDER_H_ */

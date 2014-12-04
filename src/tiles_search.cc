@@ -9,6 +9,7 @@
  * \date 2008-11-11
  */
 
+
 #include <assert.h>
 #include <math.h>
 #include <string.h>
@@ -26,6 +27,7 @@
 #include "util/timer.h"
 #include "util/timeout.h"
 #include "div_merge_project.h"
+
 
 using namespace std;
 
@@ -116,7 +118,9 @@ int main(int argc, char *argv[])
 	cout << "generated: " << search->get_generated() << endl;
 	cout << "expanded: " << search->get_expanded() << endl;
 
-	g.dumpOrder();
+//#ifdef ANALYZE_ORDER
+       	g.dumpOrder(32); // Ad hoc
+//#endif
 
 	if (project)
 		delete project;

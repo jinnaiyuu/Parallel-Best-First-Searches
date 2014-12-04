@@ -193,7 +193,7 @@ vector<State*> *GridWorld::expand8(GridState *s)
  * \return A newly allocated vector of newly allocated children
  *         states.  All of this must be deleted by the caller.
  */
-vector<State*> *GridWorld::expand(State *state)
+vector<State*> *GridWorld::expand(State *state, int thread_id)
 {
 	GridState *s = static_cast<GridState*>(state);
 

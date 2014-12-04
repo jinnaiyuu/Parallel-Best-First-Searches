@@ -93,15 +93,20 @@ fp_type State::get_h(void) const
 	return h;
 }
 
+vector<State*> *State::expand(void)
+{
+  //  printf("State::expand(void)\n");
+  return domain->expand(this, -1);
+}
 /**
  * Expand the given state.
  * \return A newly allocated vector of the children states.  This must
  *         be deleted by the caller.
  */
-vector<State*> *State::expand(void)
+vector<State*> *State::expand(int thread_id)
 {
-
-	return domain->expand(this);
+  //  printf("State::expand %d\n", thread_id);
+  return domain->expand(this, thread_id);
 }
 
 /**

@@ -155,6 +155,7 @@ public:
 	virtual bool equals(State *s) const = 0;
 
 	virtual vector<State*> *expand(void);
+	virtual vector<State*> *expand(int thread_id);
 
 	fp_type get_f(void) const;
 	fp_type get_f_prime(void) const;

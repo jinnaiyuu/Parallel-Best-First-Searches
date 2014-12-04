@@ -106,7 +106,7 @@ vector<State *> *PBNFSearch::PBNFThread::search_nblock(NBlock *n)
 #if defined(COUNT_FS)
 		fs.see_f(s->get_f());
 #endif // COUNT_FS
-		vector<State *> *children = search->expand(s);
+		vector<State *> *children = search->expand(s, get_id());
 		vector<State *>::iterator iter;
 
  		for (iter = children->begin(); iter != children->end(); iter++) {

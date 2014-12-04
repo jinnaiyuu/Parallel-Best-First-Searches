@@ -37,7 +37,7 @@ public:
 	GridWorld(istream &s);
 
 	State *initial_state(void);
-	vector<State*> *expand(State *s);
+	vector<State*> *expand(State *s, int thread_id);
 
 	int get_goal_x(void) const;
 	int get_goal_y(void) const;

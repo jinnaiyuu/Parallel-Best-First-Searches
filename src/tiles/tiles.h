@@ -37,8 +37,8 @@ public:
 	virtual ~Tiles(void);
 
 	virtual State *initial_state(void);
-	virtual vector<State *> *expand(State *s);
-
+       	virtual vector<State *> *expand(State *s);
+	virtual vector<State *> *expand(State *s, int thread_id = -1);
 	void print(ostream &o) const;
 	unsigned int get_width(void) const;
  	unsigned int get_height(void) const;
@@ -208,7 +208,11 @@ public:
 	const vector<uint64_t> *get_ones(void) const;
 	const vector<uint64_t> *get_fact_ary(void) const;
 
-	void dumpOrder(){log_node_order.dumpAll();};
+	void dumpOrder(int thread_number){
+	  for (int i = 0; i < thread_number; ++i) {
+	    log_node_order[i].dumpAll(i);
+	  }
+	};
 
 private:
 	vector<unsigned int> child(const vector<unsigned int> *tiles,
@@ -227,7 +231,8 @@ private:
 	vector<uint64_t> ones;
 	vector<uint64_t> fact_ary;
 
-	LogNodeOrder log_node_order;
+	LogNodeOrder* log_node_order;
+	std::atomic<int> globalOrder;
 };
 
 #endif	/* !_TILES_H_ */

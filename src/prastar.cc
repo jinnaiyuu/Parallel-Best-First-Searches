@@ -296,7 +296,8 @@ void PRAStar::PRAStarThread::run(void){
 #if defined(COUNT_FS)
 		fs.see_f(s->get_f());
 #endif // COUNT_FS
-		children = p->expand(s);
+		// printf("PRAStar::run: %d\n", get_id());
+		children = p->expand(s, get_id());
 		for (unsigned int i = 0; i < children->size(); i += 1) {
 			State *c = children->at(i);
 			if (c->get_f() < p->bound.read())

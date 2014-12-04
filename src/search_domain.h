@@ -37,7 +37,7 @@ public:
 
 	/* Abstract methods */
 	virtual State *initial_state(void) = 0;
-	virtual vector<State*> *expand(State *s) = 0;
+	virtual vector<State*> *expand(State *s, int thread_id) = 0;
 private:
 	Heuristic *heuristic;
 	const Projection *project;

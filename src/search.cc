@@ -36,16 +36,21 @@ Search::Search(void) : expanded(0), generated(0)
  * \return A newly allocated vector of the children states.  This must
  *         be deleted by the caller.
  */
-vector<State *> *Search::expand(State *s)
+vector<State *> *Search::expand(State *s, int thread_id)
 {
-	vector<State *> *children;	
-	children = s->expand();
+	vector<State *> *children;
+	//	printf("Search::expd %d\n", thread_id);
+	children = s->expand(thread_id);
 	expanded.inc();
 	generated.add(children->size());
 
 	return children;
 }
 
+vector<State *> *Search::expand(State *s)
+{
+  expand(s, -1);
+}
 /**
  * Clear the expanded and generated counters.
  */
