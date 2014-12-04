@@ -110,7 +110,7 @@ public:
 			return a->f_prime_pq_index;
 		}
 	private:
-		PQOpsF f_cmp;
+//		PQOpsF f_cmp;
 	};
 
 	class PQOpsFPrimeGreaterFTieBreaking {

@@ -70,7 +70,7 @@ int main(int argc, char *argv[])
 		cout << "length: " << path->size() << endl;
 
 		// Make sure that the heuristic was actually admissible!
-		for (unsigned int i = path->size() - 1; i >= 0; i -= 1) {
+		for (unsigned int i = path->size() - 1; ; i -= 1) {
 #if !defined(NDEBUG)
 			State *s = path->at(i);
 			fp_type togo = path->at(0)->get_g() - s->get_g();

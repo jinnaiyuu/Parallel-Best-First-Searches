@@ -13,6 +13,7 @@
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 
 #include <vector>
 #include <iostream>
@@ -188,6 +189,14 @@ vector<State *> *Tiles::expand(State *s)
 	unsigned int col = blank % width;
 	unsigned int row = blank / width;
 
+	// Global Node Expansion Order
+	for (int i = 0; i < tiles->size(); ++i) {
+	  printf("%x", (*tiles)[i]);
+	}
+	printf("\n");        
+	log_node_order.addStateInfo(tiles, s->get_f());
+
+       
 	TilesState *gp = static_cast<TilesState *>(s->get_parent());
 
 	if (col > 0 && (!gp || gp->get_blank() != blank - 1)) {

@@ -25,6 +25,8 @@
 #include "tiles_state.h"
 #include "tiles_costs.h"
 
+#include "../log_node_order.h"
+
 using namespace std;
 
 class Tiles : public SearchDomain {
@@ -206,6 +208,8 @@ public:
 	const vector<uint64_t> *get_ones(void) const;
 	const vector<uint64_t> *get_fact_ary(void) const;
 
+	void dumpOrder(){log_node_order.dumpAll();};
+
 private:
 	vector<unsigned int> child(const vector<unsigned int> *tiles,
 				   unsigned int o, unsigned int n);
@@ -222,6 +226,8 @@ private:
 	 * representation on an integer. */
 	vector<uint64_t> ones;
 	vector<uint64_t> fact_ary;
+
+	LogNodeOrder log_node_order;
 };
 
 #endif	/* !_TILES_H_ */

@@ -59,17 +59,17 @@ def make_board(in_data, test, weight):
     outfile.write("\n".join([str(x) for x in range(n)]))
     outfile.close()
     
-    m = hashlib.md5()
-    m.update(open(path).read())
-    new_path=subprocess.Popen(executable+" "+dir+" model="+model+" rows="+height+" cols="+width+" hash="+m.hexdigest(), shell=True, stdout=subprocess.PIPE, executable="/bin/bash").stdout.readlines()[-1].split()[-1]
+#    m = hashlib.md5()
+#    m.update(open(path).read())
+#    new_path=subprocess.Popen(executable+" "+dir+" model="+model+" rows="+height+" cols="+width+" hash="+m.hexdigest(), shell=True, stdout=subprocess.PIPE, executable="/bin/bash").stdout.readlines()[-1].split()[-1]
     #new_path = m.hexdigest()+".tile"
 
-    if os.path.exists(new_path):
-        os.remove(path)
-        return False
+#    if os.path.exists(new_path):
+#        os.remove(path)
+#        return False
 
-    shutil.move(path, new_path)
-    path = new_path
+#    shutil.move(path, new_path)
+#    path = new_path
 
     if test:
         #run A* or wA* to see if the board is solvable

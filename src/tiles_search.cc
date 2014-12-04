@@ -31,7 +31,7 @@ using namespace std;
 
 int main(int argc, char *argv[])
 {
-	unsigned int timelimit = 120;	// seconds
+	unsigned int timelimit = 10000000;	// seconds
 	vector<State *> *path;
 	Search *search = get_search(argc, argv);
 
@@ -91,6 +91,7 @@ int main(int argc, char *argv[])
 		cout << "length: " << path->size() << endl;
 
 		// Make sure that the heuristic was actually admissible!
+		/*
 		for (unsigned int i = path->size() - 1; i >= 0; i -= 1) {
 #if !defined(NDEBUG)
 			State *s = path->at(i);
@@ -102,7 +103,7 @@ int main(int argc, char *argv[])
 			if (i == 0)
 				break;
 		}
-
+		*/
 		for (unsigned int i = 0; i < path->size(); i += 1)
 			delete path->at(i);
 		delete path;
@@ -114,6 +115,8 @@ int main(int argc, char *argv[])
 	cout << "CPU_time: " << timer.get_processor_time() << endl;
 	cout << "generated: " << search->get_generated() << endl;
 	cout << "expanded: " << search->get_expanded() << endl;
+
+	g.dumpOrder();
 
 	if (project)
 		delete project;

@@ -10,6 +10,7 @@
  */
 
 #include <vector>
+#include <stdio.h>
 
 #include "util/atomic_int.h"
 #include "state.h"
@@ -37,8 +38,7 @@ Search::Search(void) : expanded(0), generated(0)
  */
 vector<State *> *Search::expand(State *s)
 {
-	vector<State *> *children;
-
+	vector<State *> *children;	
 	children = s->expand();
 	expanded.inc();
 	generated.add(children->size());
