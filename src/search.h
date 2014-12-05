@@ -40,6 +40,8 @@ public:
   void set_delay(int delay_) {delay = delay_;};
   int get_delay(void) {return delay;};
 	int get_useless(void);
+	void set_overrun(int overrun_) {overrun = overrun_;};
+	int get_overrun(void) {return overrun;};
 
 protected:
       	vector<State *> *expand(State *);
@@ -47,13 +49,13 @@ protected:
 	void set_expanded(unsigned long e);
 	void set_generated(unsigned long g);
         int useless_calc(int useless);
+	int overrun = 0;
 
 private:
 	AtomicInt expanded;
 	AtomicInt generated;
 	int delay = 0;
 	int useless_counter;
-
 };
 
 #endif	/* !_SEARCH_H_ */

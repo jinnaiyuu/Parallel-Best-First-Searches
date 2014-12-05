@@ -37,12 +37,21 @@ int main(int argc, char *argv[])
 	vector<State *> *path;
 	Search *search = get_search(argc, argv);
 
-	int delay;
-	// Hack to peal off for additional option.
+	// Delay Option: Intentionally delaying each expansion by adding useless calculation.
+	int delay = 0;
 	if (argc > 2 && sscanf(argv[2], "-d-%d", &delay) == 1) {
 	  argv++;
 	  argc--;
 	}
+	search->set_delay(delay);
+       	// Overrun Option: Overrun after finding the optimal solution.
+	// Search all nodes with f value smaller than solution cost + overrun.
+	int overrun = 0;
+	if (argc > 2 && sscanf(argv[2], "-o-%d", &overrun) == 1) {
+	  argv++;
+	  argc--;
+	}
+	search->set_overrun(overrun);
 
 	if (strcmp(argv[1], "arastar") == 0) {	// hack to peal off extra ARA* argument
 		argv++;
@@ -78,7 +87,6 @@ int main(int argc, char *argv[])
 	manhattan.set_weight(weight);
 	g.set_heuristic(&manhattan);
 
-	search->set_delay(delay);
 
 #if defined(NDEBUG)
 	timeout(timelimit);
@@ -95,6 +103,8 @@ int main(int argc, char *argv[])
 	search->output_stats();
 	printf("delay = %d\n", search->get_delay());
 	printf("useless = %d\n", search->get_useless());
+
+	printf("overrun = %d\n", search->get_overrun());
 	/* Print the graph to the terminal */
 //	g.print(cout, path);
 

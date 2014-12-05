@@ -150,7 +150,7 @@ void PRAStar::PRAStarThread::flush_receives(bool has_sends)
 	// and add stuff to the open list
 	for (unsigned int i = 0; i < q.size(); i += 1) {
 		State *c = q[i];
-		if (c->get_f() >= p->bound.read()) {
+		if (c->get_f() >= p->bound.read() + p->overrun) {
 			delete c;
 			continue;
 		}
@@ -283,7 +283,8 @@ void PRAStar::PRAStarThread::run(void){
 		if (s == NULL)
 			continue;
 
-		if (s->get_f() >= p->bound.read()) {
+		// Change this to implement overrun.
+		if (s->get_f() >= p->bound.read() + p->overrun) {
 /*
 			open.prune();
 */
@@ -300,7 +301,7 @@ void PRAStar::PRAStarThread::run(void){
 		children = p->expand(s, get_id());
 		for (unsigned int i = 0; i < children->size(); i += 1) {
 			State *c = children->at(i);
-			if (c->get_f() < p->bound.read())
+			if (c->get_f() < p->bound.read() + p->overrun)
 				send_state(c);
 			else
 				delete c;
@@ -319,7 +320,7 @@ PRAStar::PRAStar(unsigned int n_threads,
 		 bool a_recv,
 		 unsigned int max_e)
 	: n_threads(n_threads),
-	  bound(fp_infinity),
+	  bound(fp_infinity - 100), // adhoc minus to prevent overflow.
 	  project(NULL),
 	  use_abstraction(use_abst),
 	  async_send(a_send),
