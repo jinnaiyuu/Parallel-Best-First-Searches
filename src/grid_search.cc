@@ -31,11 +31,15 @@ using namespace std;
 
 int main(int argc, char *argv[])
 {
-	unsigned int timelimit = 180;	// seconds
+	unsigned int timelimit = 1800000;	// seconds
 	vector<State *> *path;
 	Search *search = get_search(argc, argv);
 	GridWorld g(cin);
 	Timer timer;
+
+	search->set_delay(0);
+	search->set_overrun(0);
+
 
 	unsigned int root = (unsigned int) sqrt((double)nblocks);
 //	GridWorld::RowModProject project(&g, nblocks);
@@ -47,6 +51,8 @@ int main(int argc, char *argv[])
 	GridWorld::ManhattanDist manhattan(&g);
 	manhattan.set_weight(weight);
 	g.set_heuristic(&manhattan);
+
+	printf("start\n");
 
 #if defined(NDEBUG)
 	timeout(timelimit);

@@ -22,6 +22,7 @@
 #include "../state.h"
 #include "../search_domain.h"
 #include "../projection.h"
+#include "../log_node_order.h"
 
 class GridState;
 
@@ -37,7 +38,8 @@ public:
 	GridWorld(istream &s);
 
 	State *initial_state(void);
-	vector<State*> *expand(State *s, int thread_id);
+	virtual vector<State*> *expand(State *s);
+	virtual vector<State*> *expand(State *s, int thread_id = -1);
 
 	int get_goal_x(void) const;
 	int get_goal_y(void) const;
@@ -125,7 +127,9 @@ private:
 	AtomicInt expanded;
 	vector<AtomicInt> states;
 #endif	/* ENABLE_IMAGES */
-
+	
+	LogNodeOrder* log_node_order;
+	std::atomic<int> globalOrder;
 };
 
 #endif	/* !_GRID_WORLD_H_ */

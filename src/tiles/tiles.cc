@@ -207,8 +207,7 @@ vector<State *> *Tiles::expand(State *s, int thread_id)
 	*/
 	// Global Node Expansion Order
 #ifdef ANALYZE_ORDER
-	log_node_order[thread_id].addStateInfo(globalOrder.fetch_add(1),
- tiles, s->get_f(), -1);
+	log_node_order[thread_id].addStateInfo(globalOrder.fetch_add(1), tiles, s->get_f(), -1);
 #endif
        
 	TilesState *gp = static_cast<TilesState *>(s->get_parent());

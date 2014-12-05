@@ -29,6 +29,8 @@
 #include "grid_state.h"
 #include "grid_world.h"
 
+#define ANALYZE_ORDER
+
 using namespace std;
 
 /**
@@ -37,7 +39,7 @@ using namespace std;
  */
 GridWorld::GridWorld(istream &s)
 #if defined(ENABLE_IMAGES)
-	: expanded(0)
+  : expanded(0), globalOrder(0)
 #endif	// ENABLE_IMAGES
 {
 	char line[100];
@@ -105,6 +107,9 @@ GridWorld::GridWorld(istream &s)
 #if defined(ENABLE_IMAGES)
 	states.resize(width * height, AtomicInt(0));
 #endif	// ENABLE_IMAGES
+	
+	printf("init\n");
+	log_node_order = new LogNodeOrder[32]; // Ad hoc
 }
 
 /**
@@ -187,6 +192,12 @@ vector<State*> *GridWorld::expand8(GridState *s)
 	return children;
 }
 
+
+vector<State*> *GridWorld::expand(State *state)
+{
+  printf("GridWorld::expd\n");
+  return expand(state, 0);
+}
 /**
  * Expand a gridstate.
  * \param state The state to expand.
@@ -196,6 +207,11 @@ vector<State*> *GridWorld::expand8(GridState *s)
 vector<State*> *GridWorld::expand(State *state, int thread_id)
 {
 	GridState *s = static_cast<GridState*>(state);
+	
+	printf("(x,y) = (%d,%d)\n", s->get_x(), s->get_y());        
+	printf("id = %d\n", thread_id);
+
+	log_node_order[thread_id].addStateInfo(globalOrder.fetch_add(1), s->hash(), s->get_f(), -1);
 
 #if defined(ENABLE_IMAGES)
 	expanded.inc();

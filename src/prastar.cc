@@ -276,7 +276,7 @@ State *PRAStar::PRAStarThread::take(void)
  */
 void PRAStar::PRAStarThread::run(void){
         vector<State *> *children = NULL;
-
+	printf("run\n");
         while(!p->is_done()){
 
 		State *s = take();
@@ -297,7 +297,7 @@ void PRAStar::PRAStarThread::run(void){
 #if defined(COUNT_FS)
 		fs.see_f(s->get_f());
 #endif // COUNT_FS
-		// printf("PRAStar::run: %d\n", get_id());
+	        printf("PRAStar::run: %d\n", get_id());
 		children = p->expand(s, get_id());
 		for (unsigned int i = 0; i < children->size(); i += 1) {
 			State *c = children->at(i);
@@ -373,6 +373,7 @@ void PRAStar::set_path(vector<State *> *p)
 
 vector<State *> *PRAStar::search(Timer *timer, State *init)
 {
+  printf("search\n");
 	solutions = new SyncSolutionStream(timer, 0.0001);
 	project = init->get_domain()->get_projection();
 

@@ -26,7 +26,15 @@ void output_search_stats_on_timeout(void)
 
 Search::Search(void) : expanded(0), generated(0)
 {
+  //  printf("Search::Search\n");
 	instance = this;
+}
+
+
+vector<State *> *Search::expand(State *s)
+{
+  printf("Search::expand(s)\n");
+  return expand(s, -1);
 }
 
 /**
@@ -39,7 +47,7 @@ Search::Search(void) : expanded(0), generated(0)
 vector<State *> *Search::expand(State *s, int thread_id)
 {
 	vector<State *> *children;
-	//	printf("Search::expd %d\n", thread_id);
+       	printf("Search::expd %d\n", thread_id);
 	// This function is run in all situation.
 	children = s->expand(thread_id);
 
@@ -53,10 +61,6 @@ vector<State *> *Search::expand(State *s, int thread_id)
 	return children;
 }
 
-vector<State *> *Search::expand(State *s)
-{
-  expand(s, -1);
-}
 /**
  * Clear the expanded and generated counters.
  */
