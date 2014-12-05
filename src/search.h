@@ -35,17 +35,25 @@ public:
 
 	void clear_counts(void);
 	unsigned long get_expanded(void) const;
-	unsigned long get_generated(void) const;
+  unsigned long get_generated(void) const;
+
+  void set_delay(int delay_) {delay = delay_;};
+  int get_delay(void) {return delay;};
+	int get_useless(void);
 
 protected:
       	vector<State *> *expand(State *);
        	vector<State *> *expand(State *, int thread_id);
 	void set_expanded(unsigned long e);
 	void set_generated(unsigned long g);
+        int useless_calc(int useless);
 
 private:
 	AtomicInt expanded;
 	AtomicInt generated;
+	int delay = 0;
+	int useless_counter;
+
 };
 
 #endif	/* !_SEARCH_H_ */

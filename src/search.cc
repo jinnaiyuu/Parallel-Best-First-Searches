@@ -40,8 +40,14 @@ vector<State *> *Search::expand(State *s, int thread_id)
 {
 	vector<State *> *children;
 	//	printf("Search::expd %d\n", thread_id);
+	// This function is run in all situation.
 	children = s->expand(thread_id);
-	expanded.inc();
+
+	// Intentional Needless operation for delaying the search.
+	useless_counter += useless_calc(useless_counter);
+
+	// These atomic operation can be a performance issue.
+       	expanded.inc();
 	generated.add(children->size());
 
 	return children;
@@ -100,4 +106,26 @@ void Search::set_generated(unsigned long g)
  */
 void Search::output_stats(void)
 {
+}
+
+int Search::useless_calc(int useless) {
+  int test = 0;
+  int uselessLocal = 0;
+  for (int i = 0; i < delay; ++i) {
+    ++test;
+    int l = 0;
+    l += useless;
+    l = 2 * l - uselessLocal;
+    if (l != 0) {
+      uselessLocal = l % useless;
+    } else {
+      uselessLocal = useless * 2;
+    }
+  }
+  //  printf("uselessLocal = %d\n", uselessLocal);
+  return uselessLocal;
+}
+
+int Search::get_useless() {
+  return useless_counter;
 }

@@ -37,6 +37,13 @@ int main(int argc, char *argv[])
 	vector<State *> *path;
 	Search *search = get_search(argc, argv);
 
+	int delay;
+	// Hack to peal off for additional option.
+	if (argc > 2 && sscanf(argv[2], "-d-%d", &delay) == 1) {
+	  argv++;
+	  argc--;
+	}
+
 	if (strcmp(argv[1], "arastar") == 0) {	// hack to peal off extra ARA* argument
 		argv++;
 		argc--;
@@ -71,6 +78,8 @@ int main(int argc, char *argv[])
 	manhattan.set_weight(weight);
 	g.set_heuristic(&manhattan);
 
+	search->set_delay(delay);
+
 #if defined(NDEBUG)
 	timeout(timelimit);
 #endif	// NDEBUG
@@ -84,7 +93,8 @@ int main(int argc, char *argv[])
 #endif	// NDEBUG
 
 	search->output_stats();
-
+	printf("delay = %d\n", search->get_delay());
+	printf("useless = %d\n", search->get_useless());
 	/* Print the graph to the terminal */
 //	g.print(cout, path);
 
@@ -121,6 +131,7 @@ int main(int argc, char *argv[])
 //#ifdef ANALYZE_ORDER
        	g.dumpOrder(32); // Ad hoc
 //#endif
+	
 
 	if (project)
 		delete project;
