@@ -28,7 +28,7 @@ public:
           wait();
                 
           while(!do_exit){
-            children = k->expand(s);
+            children = k->expand(s, get_id());
             k->cc.complete();
             wait();
           }
