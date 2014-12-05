@@ -32,6 +32,8 @@ public:
 
 	virtual int get_x(void) const;
 	virtual int get_y(void) const;
+	//       	unsigned int zbrhash(void);
+
 private:
 	int x, y;
 };

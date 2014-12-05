@@ -14,6 +14,7 @@
 
 #include <vector>
 #include <iostream>
+#include <stdlib.h>
 
 #include "tiles.h"
 #include "tiles_state.h"
@@ -52,6 +53,7 @@ TilesState::TilesState(SearchDomain *d, State *parent, fp_type c, fp_type g,
 {
 	this->h = h_val;
 	compute_hash();
+	init_zbrhash();
 }
 
 
@@ -68,6 +70,7 @@ TilesState::TilesState(SearchDomain *d, State *parent, fp_type c, fp_type g,
 		this->h = 0;
 	assert(this->h == 0 ? is_goal() : 1);
 	compute_hash();
+	init_zbrhash();
 }
 
 
@@ -139,4 +142,26 @@ const vector<unsigned int> *TilesState::get_tiles(void) const
 unsigned int TilesState::get_blank(void) const
 {
 	return blank;
+}
+
+
+void TilesState::init_zbrhash() {
+  for (int num = 0; num < 16; ++num) {
+    for (int pos = 0; pos < 16; ++pos) {
+      if (num == 0) {
+	zbr_table[num][pos] = 0;
+      } else {
+	zbr_table[num][pos] = rand();
+      }
+    }
+  }
+}
+
+unsigned int TilesState::zbrhash(void) {
+  unsigned int zbr = 0;
+  for (int pos = 0; pos < 16; ++pos) {
+    zbr = zbr ^ zbr_table[tiles[pos]][pos];
+  }
+  //  printf("zbr = %d\n", zbr);
+  return zbr;
 }
