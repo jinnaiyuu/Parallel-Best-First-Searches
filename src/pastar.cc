@@ -57,7 +57,7 @@ public:
 			if (s->is_goal())
 				p->set_path(s->get_path());
 
-			children = p->expand(s);
+			children = p->expand(s, get_id());
 			for (unsigned int i = 0; i < children->size(); i += 1) {
 				State *c = children->at(i);
 				State *dup = p->closed.lookup(c);
