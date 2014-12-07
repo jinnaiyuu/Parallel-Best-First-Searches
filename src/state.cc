@@ -95,7 +95,7 @@ fp_type State::get_h(void) const
 
 vector<State*> *State::expand(void)
 {
-  printf("State::expand(void)\n");
+  //  printf("State::expand(void)\n");
   return domain->expand(this, -1);
 }
 /**
@@ -105,7 +105,7 @@ vector<State*> *State::expand(void)
  */
 vector<State*> *State::expand(int thread_id)
 {
-  printf("State::expand %d\n", thread_id);
+  //  printf("State::expand %d\n", thread_id);
   return domain->expand(this, thread_id);
 }
 

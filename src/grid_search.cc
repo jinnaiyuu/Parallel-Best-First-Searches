@@ -31,7 +31,7 @@ using namespace std;
 
 int main(int argc, char *argv[])
 {
-	unsigned int timelimit = 1800000;	// seconds
+	unsigned int timelimit = 180;	// seconds
 	vector<State *> *path;
 	Search *search = get_search(argc, argv);
 	GridWorld g(cin);
@@ -52,12 +52,16 @@ int main(int argc, char *argv[])
 	manhattan.set_weight(weight);
 	g.set_heuristic(&manhattan);
 
-	printf("start\n");
+	// TODO: initial_state() returns null
+	//	State* st = g.initial_state();
+	//	printf("%d",st->hash());
 
+	printf("start\n");
 #if defined(NDEBUG)
 	timeout(timelimit);
 #endif	// NDEBUG
 
+	//	printf("go\n");
 	timer.start();
 	path = search->search(&timer, g.initial_state());
 	timer.stop();
@@ -69,7 +73,7 @@ int main(int argc, char *argv[])
 	search->output_stats();
 
 	/* Print the graph to the terminal */
-//	g.print(cout, path);
+	//	g.print(cout, path);
 
 	if (path) {
 		printf("cost: %f\n", (double) path->at(0)->get_g() / fp_one);

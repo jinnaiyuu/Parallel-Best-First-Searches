@@ -33,8 +33,8 @@ Search::Search(void) : expanded(0), generated(0)
 
 vector<State *> *Search::expand(State *s)
 {
-  printf("Search::expand(s)\n");
-  return expand(s, -1);
+  //  printf("Search::expand(s)\n");
+  return expand(s, 0);
 }
 
 /**
@@ -47,7 +47,7 @@ vector<State *> *Search::expand(State *s)
 vector<State *> *Search::expand(State *s, int thread_id)
 {
 	vector<State *> *children;
-       	printf("Search::expd %d\n", thread_id);
+	// printf("Search::expd %d\n", thread_id);
 	// This function is run in all situation.
 	children = s->expand(thread_id);
 

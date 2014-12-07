@@ -28,6 +28,7 @@ AStar::~AStar(void)
  */
 vector<State *> *AStar::search(Timer *t, State *init)
 {
+  printf("Astar::search\n");
 	vector<State *> *path = NULL;
 
 	open.add(init);
