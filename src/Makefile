@@ -119,7 +119,7 @@ PROFILE+=
 #PROFILE+=-pg
 DEBUG+=-O3 -DNDEBUG
 #DEBUG+=-g -O0 -fno-default-inline -fno-implicit-inline-templates -fno-implement-inlines
-FLAGS+=-std=c++11 -Wall -pipe $(DEBUG) $(PROFILE)
+FLAGS+=-std=c++11 -g -Wall -pipe $(DEBUG) $(PROFILE)
 CXXFLAGS+=-Wnon-virtual-dtor
 LDFLAGS+=-lpthread $(PROFILE)
 #LDFLAGS+=-lpthread $(PROFILE) -ltcmalloc

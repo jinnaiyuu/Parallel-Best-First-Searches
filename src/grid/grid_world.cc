@@ -108,7 +108,7 @@ GridWorld::GridWorld(istream &s)
 	states.resize(width * height, AtomicInt(0));
 #endif	// ENABLE_IMAGES
 	
-	printf("init\n");
+	//	printf("GridWorld::init\n");
 	log_node_order = new LogNodeOrder[32]; // Ad hoc
 }
 
@@ -195,7 +195,7 @@ vector<State*> *GridWorld::expand8(GridState *s)
 
 vector<State*> *GridWorld::expand(State *state)
 {
-  printf("GridWorld::expd\n");
+  //  printf("GridWorld::expd\n");
   return expand(state, 0);
 }
 /**
@@ -208,8 +208,8 @@ vector<State*> *GridWorld::expand(State *state, int thread_id)
 {
 	GridState *s = static_cast<GridState*>(state);
 	
-	printf("(x,y) = (%d,%d)\n", s->get_x(), s->get_y());        
-	printf("id = %d\n", thread_id);
+	//	printf("(x,y) = (%d,%d)\n", s->get_x(), s->get_y());        
+	//	printf("id = %d\n", thread_id);
 
 	log_node_order[thread_id].addStateInfo(globalOrder.fetch_add(1), s->hash(), s->get_f(), -1);
 

@@ -9,7 +9,7 @@
  * \date 2008-11-03
  */
 
-#define ANALYZE_ORDER
+//#define ANALYZE_ORDER
 
 #include <assert.h>
 #include <math.h>
