@@ -206,7 +206,8 @@ void PRAStar::PRAStarThread::send_state(State *c)
 	unsigned long hash =
 		p->use_abstraction
 		? p->project->project(c)
-		: c->zbrhash();
+//		: c->zbrhash();
+				: c->hash();
 	unsigned int dest_tid = threads->at(hash % p->n_threads)->get_id();
 	bool self_add = dest_tid == this->get_id();
 
