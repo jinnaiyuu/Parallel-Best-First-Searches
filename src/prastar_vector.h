@@ -9,8 +9,8 @@
  * \date 2008-11-19
  */
 
-#if !defined(_PRASTAR_H_)
-#define _PRASTAR_H_
+#if !defined(_PRASTAR_VECTOR_H_)
+#define _PRASTAR_VECTOR_H_
 
 #include <vector>
 
@@ -26,17 +26,20 @@
 #include "synch_closed_list.h"
 #include "util/completion_counter.h"
 
+#include "pq_vector_open_list.h"
+
 using namespace std;
 
-class PRAStar : public Search {
+
+class PRAStarVector : public Search {
 public:
-        PRAStar(unsigned int n_threads,
+	PRAStarVector(unsigned int n_threads,
 		bool use_abst,
 		bool async_send,
 		bool async_recv,
 		unsigned int max_exp);
 
-        virtual ~PRAStar(void);
+        virtual ~PRAStarVector(void);
 
         virtual vector<State *> *search(Timer *t, State *init);
         void set_done();
@@ -49,7 +52,7 @@ public:
 private:
         class PRAStarThread : public Thread {
         public:
-                PRAStarThread(PRAStar *p,
+                PRAStarThread(PRAStarVector *p,
 			      vector<PRAStarThread *> *threads,
 			      CompletionCounter* cc);
                 virtual ~PRAStarThread(void);
@@ -92,7 +95,7 @@ private:
 		 * for self-sends). */
 		void do_sync_send(unsigned int dest_tid, State *c);
 
-                PRAStar *p;
+                PRAStarVector *p;
 
 		/* List of the other threads */
                 vector<PRAStarThread *> *threads;
@@ -113,11 +116,11 @@ private:
 		/* A pointer to the completion counter. */
 		CompletionCounter *cc;
 
-		friend class PRAStar;
+		friend class PRAStarVector;
 
 		/* Search queues */
 		// TODO: This should be replaced by vector open list.
-		PQOpenList<State::PQOpsFPrime> open;
+		PQVectorOpenList open;
 
 		ClosedList closed;
 		bool q_empty;
@@ -160,4 +163,4 @@ private:
 #endif	/* COUNT_FS */
 };
 
-#endif	/* !_PRASTAR_H_ */
+#endif	/* !_PRASTAR_VECTOR_H_ */

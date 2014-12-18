@@ -21,6 +21,7 @@ SRC= \
 	open_list.cc \
 	lf_openlist.cc \
 	queue_open_list.cc \
+	pq_vector_open_list.cc \
 	closed_list.cc \
 	incons_list.cc \
 	lf_closedlist.cc \
@@ -82,6 +83,7 @@ SRC= \
 	pastar.cc \
 	lpastar.cc \
 	prastar.cc \
+	prastar_vector.cc \
 	wprastar.cc
 
 OBJ=$(addprefix $(OBJDIR)/, $(SRC:.cc=.o))

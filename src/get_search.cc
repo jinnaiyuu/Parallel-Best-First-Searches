@@ -45,6 +45,8 @@
 
 #include "get_search.h"
 
+#include "prastar_vector.h"
+
 #include <limits.h>
 #include <string.h>
 #include <ctype.h>
@@ -150,6 +152,10 @@ Search *get_search(int argc, char *argv[])
 		return new PRAStar(threads, true, false, false, 0);
 	} else if (argc > 1 && sscanf(argv[1], "hdastar-%u-%u", &max_e, &threads) == 2) {
 		return new PRAStar(threads, false, true, true, max_e);
+
+	} else if (argc > 1 && sscanf(argv[1], "hdastar-vector-%u-%u", &max_e, &threads) == 2) {
+		return new PRAStarVector(threads, false, true, true, max_e);
+
 	} else if (argc > 1 && sscanf(argv[1], "ahdastar-%u-%u-%u", &max_e, &threads, &nblocks) == 3) {
 		return new PRAStar(threads, true, true, true, max_e);
 
@@ -323,3 +329,4 @@ Search *get_search(int argc, char *argv[])
 		exit(EXIT_FAILURE);
 	}
 }
+

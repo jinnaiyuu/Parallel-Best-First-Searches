@@ -19,6 +19,8 @@
 #include "../queue_open_list.h"
 #include "../closed_list.h"
 
+#include "../pq_vector_open_list.h"
+
 using namespace std;
 
 namespace PSDD {
@@ -36,8 +38,8 @@ namespace PSDD {
 		unsigned int id;
 		unsigned int sigma;
 		ClosedList closed;
-		QueueOpenList open[2];
-
+	//	QueueOpenList open[2];
+		PQVectorOpenList open[2];
 		bool inuse;
 
 		set<unsigned int> interferes;

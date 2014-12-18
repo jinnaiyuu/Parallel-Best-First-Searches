@@ -24,7 +24,7 @@ extern "C" {
 #include "util/mutex.h"
 #include "util/msg_buffer.h"
 #include "util/sync_solution_stream.h"
-#include "prastar.h"
+#include "prastar_vector.h"
 #include "projection.h"
 #include "search.h"
 #include "state.h"
@@ -36,7 +36,7 @@ F_hist PRAStar::fs;
 #endif // COUNT_FS
 
 
-PRAStar::PRAStarThread::PRAStarThread(PRAStar *p,
+PRAStarVector::PRAStarThread::PRAStarThread(PRAStarVector *p,
 		vector<PRAStarThread *> *threads, CompletionCounter* cc) :
 		p(p), threads(threads), cc(cc), q_empty(true) {
 	expansions = 0;
@@ -46,7 +46,7 @@ PRAStar::PRAStarThread::PRAStarThread(PRAStar *p,
 }
 
 
-PRAStar::PRAStarThread::~PRAStarThread(void) {
+PRAStarVector::PRAStarThread::~PRAStarThread(void) {
 	vector<MsgBuffer<State*> *>::iterator i;
 	for (i = out_qs.begin(); i != out_qs.end(); i++)
 		if (*i)
@@ -54,17 +54,17 @@ PRAStar::PRAStarThread::~PRAStarThread(void) {
 }
 
 
-vector<State*> *PRAStar::PRAStarThread::get_queue(void) {
+vector<State*> *PRAStarVector::PRAStarThread::get_queue(void) {
 	return &q;
 }
 
 
-Mutex *PRAStar::PRAStarThread::get_mutex(void) {
+Mutex *PRAStarVector::PRAStarThread::get_mutex(void) {
 	return &mutex;
 }
 
 
-void PRAStar::PRAStarThread::post_send(void *t) {
+void PRAStarVector::PRAStarThread::post_send(void *t) {
 	PRAStarThread *thr = (PRAStarThread*) t;
 	if (thr->completed) {
 		thr->cc->uncomplete();
@@ -74,7 +74,7 @@ void PRAStar::PRAStarThread::post_send(void *t) {
 }
 
 
-bool PRAStar::PRAStarThread::flush_sends(void) {
+bool PRAStarVector::PRAStarThread::flush_sends(void) {
 	unsigned int i;
 	bool has_sends = false;
 
@@ -99,7 +99,7 @@ bool PRAStar::PRAStarThread::flush_sends(void) {
  * Flush the queue
  */
 
-void PRAStar::PRAStarThread::flush_receives(bool has_sends) {
+void PRAStarVector::PRAStarThread::flush_receives(bool has_sends) {
 #if defined(INSTRUMENTED)
 	Timer t;
 	bool timer_started = false;
@@ -168,7 +168,7 @@ void PRAStar::PRAStarThread::flush_receives(bool has_sends) {
 }
 
 
-void PRAStar::PRAStarThread::do_async_send(unsigned int dest_tid, State *c) {
+void PRAStarVector::PRAStarThread::do_async_send(unsigned int dest_tid, State *c) {
 	if (!out_qs[dest_tid]) {
 		Mutex *lk = threads->at(dest_tid)->get_mutex();
 		vector<State*> *qu = threads->at(dest_tid)->get_queue();
@@ -180,7 +180,7 @@ void PRAStar::PRAStarThread::do_async_send(unsigned int dest_tid, State *c) {
 }
 
 
-void PRAStar::PRAStarThread::do_sync_send(unsigned int dest_tid, State *c) {
+void PRAStarVector::PRAStarThread::do_sync_send(unsigned int dest_tid, State *c) {
 	PRAStarThread *dest = threads->at(dest_tid);
 
 	dest->get_mutex()->lock();
@@ -190,7 +190,7 @@ void PRAStar::PRAStarThread::do_sync_send(unsigned int dest_tid, State *c) {
 }
 
 
-void PRAStar::PRAStarThread::send_state(State *c) {
+void PRAStarVector::PRAStarThread::send_state(State *c) {
 	unsigned long hash =
 			p->use_abstraction ? p->project->project(c) : c->hash();
 	unsigned int dest_tid = threads->at(hash % p->n_threads)->get_id();
@@ -224,7 +224,7 @@ void PRAStar::PRAStarThread::send_state(State *c) {
 }
 
 
-State *PRAStar::PRAStarThread::take(void) {
+State *PRAStarVector::PRAStarThread::take(void) {
 	bool has_sends = true;
 
 	expansions += 1;
@@ -257,7 +257,7 @@ State *PRAStar::PRAStarThread::take(void) {
  * Run the search thread.
  */
 
-void PRAStar::PRAStarThread::run(void) {
+void PRAStarVector::PRAStarThread::run(void) {
 	vector<State *> *children = NULL;
 
 	while (!p->is_done()) {
@@ -294,7 +294,7 @@ void PRAStar::PRAStarThread::run(void) {
 /************************************************************/
 
 
-PRAStar::PRAStar(unsigned int n_threads, bool use_abst, bool a_send,
+PRAStarVector::PRAStarVector(unsigned int n_threads, bool use_abst, bool a_send,
 		bool a_recv, unsigned int max_e) :
 		n_threads(n_threads), bound(fp_infinity), project(NULL), use_abstraction(
 				use_abst), async_send(a_send), async_recv(a_recv), max_exp(
@@ -307,7 +307,7 @@ PRAStar::PRAStar(unsigned int n_threads, bool use_abst, bool a_send,
 }
 
 
-PRAStar::~PRAStar(void) {
+PRAStarVector::~PRAStarVector(void) {
 	for (iter = threads.begin(); iter != threads.end(); iter++) {
 		if (*iter)
 			delete (*iter);
@@ -315,17 +315,17 @@ PRAStar::~PRAStar(void) {
 }
 
 
-void PRAStar::set_done() {
+void PRAStarVector::set_done() {
 	done = true;
 }
 
 
-bool PRAStar::is_done() {
+bool PRAStarVector::is_done() {
 	return done;
 }
 
 
-void PRAStar::set_path(vector<State *> *p) {
+void PRAStarVector::set_path(vector<State *> *p) {
 	fp_type b, oldb;
 
 	assert(solutions);
@@ -343,7 +343,7 @@ void PRAStar::set_path(vector<State *> *p) {
 }
 
 
-vector<State *> *PRAStar::search(Timer *timer, State *init) {
+vector<State *> *PRAStarVector::search(Timer *timer, State *init) {
 	solutions = new SyncSolutionStream(timer, 0.0001);
 	project = init->get_domain()->get_projection();
 
@@ -369,7 +369,7 @@ vector<State *> *PRAStar::search(Timer *timer, State *init) {
 }
 
 
-void PRAStar::output_stats(void) {
+void PRAStarVector::output_stats(void) {
 #if defined(QUEUE_SIZES)
 	max_open_size = 0;
 	avg_open_size = 0;
