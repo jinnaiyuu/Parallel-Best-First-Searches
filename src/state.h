@@ -179,6 +179,8 @@ public:
 	/* indexes into the pq open lists. */
 	int f_pq_index;
 	int f_prime_pq_index;
+
+	virtual unsigned int zbrhash(void) = 0;
 };
 
 #endif	/* !_STATE_H_ */

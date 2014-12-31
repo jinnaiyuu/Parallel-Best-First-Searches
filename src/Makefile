@@ -58,6 +58,8 @@ SRC= \
 	tiles/tiles_state.cc \
 	tiles/tiles.cc \
 	tiles/tiles_costs.cc \
+	tsp/tsp_state.cc \
+	tsp/tsp.cc \
 	psdd/nblock.cc \
 	psdd/nblock_graph.cc \
 	psdd_search.cc \
@@ -155,6 +157,7 @@ CXXFLAGS+=$(FLAGS)
 PROGS=$(addsuffix .$(MARCH), \
 	grid_search \
 	tiles_search \
+	tsp_search \
 	grid_search_sync \
 	tiles_search_sync \
 )
@@ -166,6 +169,9 @@ grid_search.$(MARCH): $(OBJ) grid_search.cc
 
 tiles_search.$(MARCH): $(OBJ) tiles_search.cc
 	$(CXX) $(CXXFLAGS) -o $@ $(OBJ) $(LDFLAGS) tiles_search.cc
+
+tsp_search.$(MARCH): $(OBJ) tsp_search.cc
+	$(CXX) $(CXXFLAGS) -o $@ $(OBJ) $(LDFLAGS) tsp_search.cc
 
 grid_search_sync.$(MARCH): $(OBJ) grid_search_sync.cc
 	$(CXX) $(CXXFLAGS) -o $@ $(OBJ) $(LDFLAGS) grid_search_sync.cc

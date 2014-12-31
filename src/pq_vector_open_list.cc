@@ -32,6 +32,12 @@ using namespace std;
 {
 }
 
+void PQVectorOpenList::changeSize(unsigned int size)
+{
+	// This instruction would take a bit of time.
+	pq.resize(size);
+}
+
 /**
  * Add a state to the OpenList.
  * \param s The state to add.

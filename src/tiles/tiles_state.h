@@ -36,11 +36,16 @@ public:
 
 	const vector<unsigned int> *get_tiles(void) const;
 	unsigned int get_blank(void) const;
+	void init_zbrhash(void);
 private:
 	void compute_hash(void);
+	unsigned int zbrhash(void);
 	vector<unsigned int> tiles;
 	unsigned int blank;
 	uint64_t hash_val;
+
+	static unsigned int zbr_table[16][16]; // for 15 puzzle
 };
+
 
 #endif	/* !_TILES_STATE_H_ */

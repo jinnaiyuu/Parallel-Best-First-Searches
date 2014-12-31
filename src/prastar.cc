@@ -192,7 +192,9 @@ void PRAStar::PRAStarThread::do_sync_send(unsigned int dest_tid, State *c) {
 
 void PRAStar::PRAStarThread::send_state(State *c) {
 	unsigned long hash =
-			p->use_abstraction ? p->project->project(c) : c->hash();
+			p->use_abstraction ? p->project->project(c)
+//					 : c->hash();
+					: c->zbrhash();
 	unsigned int dest_tid = threads->at(hash % p->n_threads)->get_id();
 	bool self_add = dest_tid == this->get_id();
 

@@ -35,6 +35,8 @@ int main(int argc, char *argv[])
 	vector<State *> *path;
 	Search *search = get_search(argc, argv);
 	GridWorld g(cin);
+
+
 	Timer timer;
 
 	unsigned int root = (unsigned int) sqrt((double)nblocks);

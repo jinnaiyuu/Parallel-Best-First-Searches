@@ -37,7 +37,8 @@ public:
 		bool use_abst,
 		bool async_send,
 		bool async_recv,
-		unsigned int max_exp);
+		unsigned int max_exp,
+		unsigned int openlistsize_);
 
         virtual ~PRAStarVector(void);
 
@@ -119,7 +120,7 @@ private:
 		friend class PRAStarVector;
 
 		/* Search queues */
-		// TODO: This should be replaced by vector open list.
+		//: This should be replaced by vector open list.
 		PQVectorOpenList open;
 
 		ClosedList closed;
@@ -157,6 +158,8 @@ private:
 	double max_spinning;
 	double avg_open_size;
 	unsigned int max_open_size;
+
+	unsigned int openlistsize;
 
 #if defined(COUNT_FS)
 	static F_hist fs;

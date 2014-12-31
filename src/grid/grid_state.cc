@@ -110,3 +110,7 @@ int GridState::get_y(void) const
 {
 	return y;
 }
+
+unsigned int GridState::zbrhash(void){
+ return hash();
+}

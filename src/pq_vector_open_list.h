@@ -114,6 +114,7 @@ class PQVectorOpenList : public OpenList {
 
 public:
 	PQVectorOpenList(void);
+	void changeSize(unsigned int size);
 	void add(State *s);
 	State *take(void);
 	State *peek(void);

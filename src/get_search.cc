@@ -116,6 +116,8 @@ Search *get_search(int argc, char *argv[])
 	unsigned int multiplier;
 	double bound;
 
+	unsigned int openlistsize = 0;
+
 	if (argc > 1 && strcmp(argv[1], "astar") == 0) {
 		return new AStar();
 	} else if (argc > 1 && sscanf(argv[1], "wastar-%lf", &weight) == 1) {
@@ -153,8 +155,11 @@ Search *get_search(int argc, char *argv[])
 	} else if (argc > 1 && sscanf(argv[1], "hdastar-%u-%u", &max_e, &threads) == 2) {
 		return new PRAStar(threads, false, true, true, max_e);
 
-	} else if (argc > 1 && sscanf(argv[1], "hdastar-vector-%u-%u", &max_e, &threads) == 2) {
-		return new PRAStarVector(threads, false, true, true, max_e);
+//	} else if (argc > 1 && sscanf(argv[1], "hdastar-vector-%u-%u", &max_e, &threads) == 2) {
+//		return new PRAStarVector(threads, false, true, true, max_e);
+	} else if (argc > 1 && sscanf(argv[1], "hdastar-vector-%u-%u-%u", &max_e, &threads, &openlistsize) == 3) {
+		// This is for grid path-finding. Actually we only need this thing.
+		return new PRAStarVector(threads, false, true, true, max_e, openlistsize);
 
 	} else if (argc > 1 && sscanf(argv[1], "ahdastar-%u-%u-%u", &max_e, &threads, &nblocks) == 3) {
 		return new PRAStar(threads, true, true, true, max_e);
