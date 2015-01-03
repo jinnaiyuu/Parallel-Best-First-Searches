@@ -58,6 +58,13 @@ public:
 		vector<unsigned int> table;
 	};
 
+	class Blind : public Heuristic {
+	public:
+		Blind(const SearchDomain *d);
+		virtual ~Blind(void);
+		virtual fp_type compute(State *s) const;
+	};
+
 	/* only look at 1 tile and the blank. */
 	class OneTileProject : public Projection {
 	public:

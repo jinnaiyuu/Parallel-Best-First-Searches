@@ -62,6 +62,13 @@ public:
 		fp_type mst(vector<bool> *not_visited) const;
 	};
 
+	class Blind : public Heuristic {
+	public:
+		Blind(const SearchDomain *d);
+		fp_type compute(State *s) const;
+	private:
+	};
+
 	/*
 	 * Projection function that uses the row number mod a value.
 	 */
@@ -74,7 +81,7 @@ public:
 		vector<unsigned int> get_successors(unsigned int b) const;
 		vector<unsigned int> get_predecessors(unsigned int b) const;
 	private:
-		vector<unsigned int> get_neighbors(unsigned int b) const;
+//		vector<unsigned int> get_neighbors(unsigned int b) const;
 		unsigned int mod_val;
 		unsigned int max_row;
 	};

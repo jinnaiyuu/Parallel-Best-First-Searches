@@ -30,16 +30,17 @@
 using namespace std;
 
 int main(int argc, char *argv[]) {
+	printf("get_search\n");
 	unsigned int timelimit = 10000; // seconds
 	vector<State *> *path;
-	printf("get_search\n");
 	Search *search = get_search(argc, argv);
 
 	if (strcmp(argv[1], "arastar") == 0) { // hack to peal off extra ARA* argument
 		argv++;
 		argc--;
 	}
-	//	string cost = argc == 2 ? "unit" : argv[2];
+//	string cost = argc == 2 ? "unit" : argv[2];
+
 	Tsp g(cin);
 	Timer timer;
 	Projection *project;
@@ -48,14 +49,8 @@ int main(int argc, char *argv[]) {
 	// TODO: How can you abstract TSP properly?
 	if (nblocks == 0) {
 		project = NULL;
-	} else if (nblocks == 1 || nblocks == 240) {
+	} else if (nblocks) { // TODO: ad hoc
 		project = new Tsp::RowModProject(&g, nblocks);
-	} else if (nblocks == 2 || nblocks == 3360) {
-		project = new Tsp::RowModProject(&g, nblocks);
-	} else if (nblocks == 3 || nblocks == 43680) {
-		project = new Tsp::RowModProject(&g, nblocks);
-/*	} else if (nblocks == 123) {
-		project = new Tiles::TwoTileNoBlankProject(&g, 1, 2, 3);*/
 	} else {
 		cerr << "Invalid abstraction size: " << nblocks << endl;
 		cerr << "15-puzzle: 240=1tile, 3360=2tile" << endl;
@@ -63,9 +58,17 @@ int main(int argc, char *argv[]) {
 	}
 
 	g.set_projection(project);
-	printf("MSP\n");
+
+//	printf("MSP\n");
 	Tsp::MinimumSpanningTree msp(&g);
-	g.set_heuristic(&msp);
+	Tsp::Blind blind(&g);
+// If parameter given as blind, then run blind heuristic.
+	if (argc >= 3 && (strcmp(argv[2], "blind") == 0)) {
+//		printf("blind\n");
+		g.set_heuristic(&blind);
+	} else {
+		g.set_heuristic(&msp);
+	}
 
 	printf("heuristic done\n");
 

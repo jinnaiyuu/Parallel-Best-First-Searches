@@ -66,8 +66,14 @@ int main(int argc, char *argv[])
 //	HZero hzero(&g);
 //	g.set_heuristic(&hzero);
 	Tiles::ManhattanDist manhattan(&g);
-	manhattan.set_weight(weight);
-	g.set_heuristic(&manhattan);
+	Tiles::Blind blind(&g);
+	if (argc >= 4 && (strcmp(argv[3], "blind") == 0)) {
+		g.set_heuristic(&blind);
+	} else {
+		manhattan.set_weight(weight);
+		g.set_heuristic(&manhattan);
+	}
+
 
 #if defined(NDEBUG)
 	timeout(timelimit);

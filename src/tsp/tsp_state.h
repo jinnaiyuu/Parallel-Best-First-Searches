@@ -27,7 +27,7 @@ using namespace std;
 class TspState : public State {
 public:
 	TspState(Tsp *d, State *parent, fp_type c, fp_type g, vector<unsigned int>* visited_);
-
+	TspState(Tsp *d, State *parent, fp_type c, fp_type g, vector<unsigned int>* visited_, unsigned int zbr_val_);
 	virtual bool is_goal(void); // All city already visited and in the home city.
 	virtual uint64_t hash(void) const; // Can make hash with two integer, visited[] and visiting.
 	virtual State *clone(void) const; 
@@ -39,10 +39,16 @@ public:
 //	virtual int get_visiting(void) const;
 
 	// zobrist hash can be given by visited and visiting.
-//	void init_zbrhash(void) {;};
+	void init_zbrhash(void);
 	unsigned int zbrhash(void);
+	unsigned int inc_zbrhash(void);
+	unsigned int get_zbr(void){return zbr_val;};
+
+	static unsigned int zbr_table[100]; // adhoc size
+
 private:
 	vector<unsigned int> visited;
+	unsigned int zbr_val;
 };
 
 #endif	/* !_Tsp_STATE_H_ */

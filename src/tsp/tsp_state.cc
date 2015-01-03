@@ -39,9 +39,22 @@ TspState::TspState(Tsp *d, State *parent, fp_type c, fp_type g,
 	} else {
 		this->h = 0;
 	}
-//	printf("visited_ size = %lu\n", visited_->size());
-//	printf("h,g = %lu, %lu\n", this->h, this->g);
+	this->zbr_val = zbrhash();
+//	printf("zbr_val = %u", zbr_val);
+}
 
+TspState::TspState(Tsp *d, State *parent, fp_type c, fp_type g,
+		vector<unsigned int>* visited_, unsigned int zbr_val_) :
+		State(d, parent, c, g) {
+//	printf("TspState\n");
+	visited = *visited_;
+	if (domain->get_heuristic()) {
+//		printf("compute\n");
+		this->h = domain->get_heuristic()->compute(this);
+	} else {
+		this->h = 0;
+	}
+	this->zbr_val = zbr_val_;
 }
 
 /**
@@ -105,6 +118,23 @@ vector<unsigned int> TspState::get_visited(void) const {
 	return visited;
 }
 
-unsigned int TspState::zbrhash(void) {
-	return hash();
+void TspState::init_zbrhash(void) {
+	const Tsp* d = static_cast<const Tsp *>(domain);
+	for (unsigned int i = 0; i < d->get_number_of_cities(); ++i) {
+		zbr_table[i] = rand();
+//		printf("zbr[%u] = %u\n", i, zbr_table[i]);
+	}
 }
+
+unsigned int TspState::zbrhash(void) {
+	return zbr_val;
+	/*	vector<unsigned int> visited = get_visited();
+	unsigned int zbr = 0;
+	for (unsigned int i = 0; i < visited.size(); ++i) {
+		zbr = zbr ^ zbr_table[visited[i]];
+	}
+//	printf("zbr = %u\n", zbr%8);
+	return zbr;*/
+}
+
+unsigned int TspState::zbr_table[100];

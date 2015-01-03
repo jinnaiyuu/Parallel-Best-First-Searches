@@ -378,6 +378,21 @@ fp_type Tiles::ManhattanDist::compute_incr(TilesState *s,
 	return ret;
 }
 
+/**************************************************************/
+
+Tiles::Blind::Blind(const SearchDomain *d)
+	: Heuristic(d)
+{
+}
+
+Tiles::Blind::~Blind(void)
+{
+}
+
+fp_type Tiles::Blind::compute(State *state) const {
+	return 0;
+}
+
 /**********************************************************************/
 
 Tiles::OneTileProject::OneTileProject(const SearchDomain *d)

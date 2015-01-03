@@ -94,7 +94,10 @@ Tsp::Tsp(istream &s)
 State *Tsp::initial_state(void) {
 	vector<unsigned int>* empty = new vector<unsigned int>();
 	printf("initial_state\n");
-	return new TspState(this, NULL, 0, 0, empty);
+	State* state = new TspState(this, NULL, 0, 0, empty);
+	TspState *s = static_cast<TspState*>(state);
+	s->init_zbrhash();
+	return state;
 }
 
 /**
@@ -139,6 +142,8 @@ vector<State*> *Tsp::expand_usual(TspState *state) {
 
 	// i from 1 because 0 is the home town.
 	unsigned int from = 0;
+	unsigned int zbr_val = state->get_zbr();
+
 	if (visited.size() > 0) {
 		from = visited.back();
 	}
@@ -148,8 +153,9 @@ vector<State*> *Tsp::expand_usual(TspState *state) {
 			new_visited.push_back(i);
 			double cost = miles[from * number_of_cities + new_visited.back()]
 					* 10000; // TODO: not sure how this works.
+			unsigned int new_zbr_val = zbr_val ^ state->zbr_table[i];
 			children->push_back(
-					new TspState(this, state, cost, g + cost, &new_visited));
+					new TspState(this, state, cost, g + cost, &new_visited, new_zbr_val));
 		}
 	}
 	return children;
@@ -164,7 +170,7 @@ vector<State*> *Tsp::expand_to_goal(TspState *state) {
 	vector<unsigned int> new_visited(visited);
 	new_visited.push_back(0);
 	children->push_back(
-			new TspState(this, state, cost, g + cost, &new_visited));
+			new TspState(this, state, cost, g + cost, &new_visited, state->get_zbr()));
 	return children;
 }
 /**
@@ -268,6 +274,7 @@ fp_type Tsp::MinimumSpanningTree::compute(State *state) const {
 	fp_type mst_cost = mst(&not_visited);
 //	printf("mst_cost = %lu\n", mst_cost);
 	return mst_cost + min;
+
 }
 
 // Prim's Algorithm
@@ -321,6 +328,22 @@ fp_type Tsp::MinimumSpanningTree::mst(vector<bool> *not_visited) const {
 /****************************************************************************/
 /****************************************************************************/
 
+
+Tsp::Blind::Blind(const SearchDomain *d) :
+		Heuristic(d) {
+}
+
+fp_type Tsp::Blind::compute(State *s) const {
+	return 0;
+}
+
+
+/****************************************************************************/
+/****************************************************************************/
+/****************************************************************************/
+
+//#define MOD 16
+
 /**
  * Create a new row modulos projection function.
  * \param d The search domain (a GridWorld)
@@ -343,14 +366,38 @@ Tsp::RowModProject::~RowModProject() {
 
 // TODO: ad hoc. need to come up with smart way to abstract.
 unsigned int Tsp::RowModProject::project(State *s) const {
+//	printf("RowModProject::project\n");
 	TspState *g;
-
 	g = static_cast<TspState *>(s);
+	vector<unsigned int> visited = g->get_visited();
 
-	if (g->get_visited().size() == 0) {
+//	printf("size = %lu\n", visited.size());
+
+	if (visited.size() == 0) {
 		return 0;
 	}
-	return g->get_visited()[0];
+
+//	hash = visited[0];
+
+	/*	while (visited.size() > modulo) {
+	 hash = hash * MOD + (visited[modulo] + 1); // ad hoc. won't work for cities > 16.
+	 modulo += mod_val;
+	 }*/
+	if (visited.size() < mod_val) {
+		return visited[0];
+	} else {
+		unsigned int hash = visited[0] + 1;
+		for (unsigned int i = 1; i < 1; ++i) {
+			unsigned int p = 1;
+			for (unsigned int j = 0; j < i; ++j) {
+				p *= mod_val;
+			}
+			hash = hash + (visited[i] + 1) * p;
+		}
+		return hash;
+	}
+//	printf("front = %u\n", visited.front());
+
 }
 
 /**
@@ -358,7 +405,7 @@ unsigned int Tsp::RowModProject::project(State *s) const {
  * \return The number of NBlocks.
  */
 unsigned int Tsp::RowModProject::get_num_nblocks(void) const {
-	return mod_val;
+	return mod_val * mod_val + 1;
 }
 
 /**
@@ -368,7 +415,34 @@ unsigned int Tsp::RowModProject::get_num_nblocks(void) const {
  */
 // TODO: ad hoc
 vector<unsigned int> Tsp::RowModProject::get_successors(unsigned int b) const {
-	return get_neighbors(b);
+	vector<unsigned int> s;
+	/*	for (unsigned int i = 0; i < number_of_cities; ++i) {
+	 s.push_back(b * MOD + i + 1);
+	 }*/
+	/*if (b == 0) {
+	 for (unsigned int i = 1; i <= number_of_cities; ++i) {
+	 s.push_back(i);
+	 }
+	 } else {
+	 for (unsigned int i = 1; i <= number_of_cities; ++i) {
+	 s.push_back(b * MOD + i);
+	 }
+	 }*/
+	if (b == 0) {
+		for (unsigned int i = 1; i <= number_of_cities; ++i) {
+			s.push_back(i);
+		}
+//	} else if (b < MOD) { // visited[0]
+	} else if (b < mod_val){
+		for (unsigned int i = 1; i <= number_of_cities; ++i) {
+			s.push_back(b + i * mod_val);
+		}
+	} else if (b < mod_val * mod_val){
+		for (unsigned int i = 1; i <= number_of_cities; ++i) {
+			s.push_back(b + i * mod_val * mod_val);
+		}
+	}
+	return s;
 }
 
 /**
@@ -379,24 +453,47 @@ vector<unsigned int> Tsp::RowModProject::get_successors(unsigned int b) const {
 // TODO: ad hoc
 vector<unsigned int> Tsp::RowModProject::get_predecessors(
 		unsigned int b) const {
-	return get_neighbors(b);
+	vector<unsigned int> s;
+	/*
+	 if (b < MOD) {
+	 s.push_back(0);
+	 return s;
+	 }
+	 */
+	if (b == 0) {
+		return s;
+	} else if (b < mod_val) {
+		s.push_back(0);
+	} else { // b < MOD * MOD
+//		printf("b = %u, b/MOD = %u\n", b, b % MOD);
+		s.push_back(b % mod_val);
+	}
+
+	return s;
 }
 
 /**
  * Get the neighboring NBlock numbers.
  */
-vector<unsigned int> Tsp::RowModProject::get_neighbors(unsigned int b) const {
-	vector<unsigned int> p;
+/*vector<unsigned int> Tsp::RowModProject::get_neighbors(unsigned int b) const {
+ vector<unsigned int> p;
+ if (b == 0) {
+ for (unsigned int i = 1; i < number_of_cities; ++i) {
+ p.push_back(i);
+ }
+ } else {
+ // TODO: ad hoc
+ p.push_back(0);
+ }
+ if (b > 0)
+ p.push_back((b - 1) % mod_val);
+ else
+ p.push_back(mod_val - 1);
 
-	/*	if (b > 0)
-	 p.push_back((b - 1) % mod_val);
-	 else
-	 p.push_back(mod_val - 1);
+ p.push_back((b + 1) % mod_val);
 
-	 p.push_back((b + 1) % mod_val);*/
-	p.push_back(b); // TODO: ad hoc
-	return p;
-}
+ return p;
+ }*/
 
 unsigned int Tsp::number_of_cities;
 double* Tsp::miles;
