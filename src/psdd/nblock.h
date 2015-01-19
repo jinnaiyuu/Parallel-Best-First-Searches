@@ -38,8 +38,8 @@ namespace PSDD {
 		unsigned int id;
 		unsigned int sigma;
 		ClosedList closed;
-	//	QueueOpenList open[2];
-		PQVectorOpenList open[2];
+		QueueOpenList open[2];
+	//	PQVectorOpenList open[2];
 		bool inuse;
 
 		set<unsigned int> interferes;

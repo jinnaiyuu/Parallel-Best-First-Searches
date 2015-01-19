@@ -21,6 +21,7 @@
 #include "../closed_list.h"
 #include "../projection.h"
 #include "../util/fixed_point.h"
+#include "../pq_vector_open_list.h"
 
 using namespace std;
 
@@ -83,8 +84,8 @@ namespace PBNF {
 		unsigned int id;
 		unsigned int sigma;
 		ClosedList closed;
-		PQOpenList<State::PQOpsFPrime> open;
-
+//		PQOpenList<State::PQOpsFPrime> open;
+		PQVectorOpenList open;
 		unsigned int sigma_hot;
 		int hot;
 		int inuse;

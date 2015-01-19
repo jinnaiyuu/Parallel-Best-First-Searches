@@ -41,6 +41,8 @@ void TilesState::compute_hash(void) {
 		hash_val += d * fact_ary->at(i);
 		bits |= 1 << k;
 	}
+//	printf("h = %lu\n", this->h);
+
 }
 
 TilesState::TilesState(SearchDomain *d, State *parent, fp_type c, fp_type g,
@@ -48,7 +50,6 @@ TilesState::TilesState(SearchDomain *d, State *parent, fp_type c, fp_type g,
 		State(d, parent, c, g), tiles(tiles), blank(blank) {
 	this->h = h_val;
 	compute_hash();
-//	init_zbrhash();
 }
 
 TilesState::TilesState(SearchDomain *d, State *parent, fp_type c, fp_type g,
@@ -61,7 +62,6 @@ TilesState::TilesState(SearchDomain *d, State *parent, fp_type c, fp_type g,
 		this->h = 0;
 	assert(this->h == 0 ? is_goal() : 1);
 	compute_hash();
-//	init_zbrhash();
 }
 
 /**
@@ -125,12 +125,13 @@ unsigned int TilesState::get_blank(void) const {
 }
 
 void TilesState::init_zbrhash() {
-	for (int num = 0; num < 16; ++num) {
-		for (int pos = 0; pos < 16; ++pos) {
+	size = tiles.size();
+	for (unsigned int num = 0; num < size; ++num) {
+		for (unsigned int pos = 0; pos < size; ++pos) {
 			if (num == 0) {
 				zbr_table[num][pos] = 0;
 			} else {
-				zbr_table[num][pos] = rand();
+				zbr_table[num][pos] = rand(); // 0 to 255
 			}
 		}
 	}
@@ -145,11 +146,13 @@ void TilesState::init_zbrhash() {
 
 unsigned int TilesState::zbrhash(void) {
 	unsigned int zbr = 0;
-	for (int pos = 0; pos < 16; ++pos) {
+
+	for (unsigned int pos = 0; pos < size; ++pos) {
 		zbr = zbr ^ zbr_table[tiles[pos]][pos];
 	}
 //	printf("zbr = %d\n", zbr % 8);
 	return zbr;
 }
 
-unsigned int TilesState::zbr_table[16][16];
+unsigned int TilesState::size;
+unsigned int TilesState::zbr_table[25][25];

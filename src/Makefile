@@ -22,6 +22,7 @@ SRC= \
 	lf_openlist.cc \
 	queue_open_list.cc \
 	pq_vector_open_list.cc \
+	sync_pq_vector_open_list.cc \
 	closed_list.cc \
 	incons_list.cc \
 	lf_closedlist.cc \
@@ -85,6 +86,8 @@ SRC= \
 	pastar.cc \
 	lpastar.cc \
 	prastar.cc \
+	astar_vector.cc \
+	pastar_vector.cc \
 	prastar_vector.cc \
 	wprastar.cc
 
@@ -123,9 +126,9 @@ PROFILE+=
 #PROFILE+=-pg
 DEBUG+=-O3 -DNDEBUG
 #DEBUG+=-g -O0 -fno-default-inline -fno-implicit-inline-templates -fno-implement-inlines
-FLAGS+=-Wall -Werror -pipe $(DEBUG) $(PROFILE)
+FLAGS+=-Wall -Wno-char-subscripts -pipe $(DEBUG) $(PROFILE)
 CXXFLAGS+=-Wnon-virtual-dtor
-LDFLAGS+=-lpthread $(PROFILE)
+LDFLAGS+=-std=c++11 -lpthread $(PROFILE)
 #LDFLAGS+=-lpthread $(PROFILE) -ltcmalloc
 #LDFLAGS+=-L /home/aifs2/eaburns/lib -ljemalloc_mt -lpthread $(PROFILE)
 endif

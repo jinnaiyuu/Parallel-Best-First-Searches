@@ -58,10 +58,10 @@ def make_board(in_data, test, weight):
     outfile.write("goal positions:\n")
     outfile.write("\n".join([str(x) for x in range(n)]))
     outfile.close()
-    
-    m = hashlib.md5()
-    m.update(open(path).read())
-    new_path=subprocess.Popen(executable+" "+dir+" model="+model+" rows="+height+" cols="+width+" hash="+m.hexdigest(), shell=True, stdout=subprocess.PIPE, executable="/bin/bash").stdout.readlines()[-1].split()[-1]
+    return True;
+#    m = hashlib.md5()
+#    m.update(open(path).read())
+#    new_path=subprocess.Popen(executable+" "+dir+" model="+model+" rows="+height+" cols="+width+" hash="+m.hexdigest(), shell=True, stdout=subprocess.PIPE, executable="/bin/bash").stdout.readlines()[-1].split()[-1]
     #new_path = m.hexdigest()+".tile"
 
     if os.path.exists(new_path):

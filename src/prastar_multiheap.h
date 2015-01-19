@@ -9,8 +9,8 @@
  * \date 2008-11-19
  */
 
-#if !defined(_PRASTAR_H_)
-#define _PRASTAR_H_
+#if !defined(_PRASTAR_MULTIHEAP_H_)
+#define _PRASTAR_MULTIHEAP_H_
 
 #include <vector>
 
@@ -26,14 +26,16 @@
 #include "synch_closed_list.h"
 #include "util/completion_counter.h"
 
+#include "pq_multiheap_open_list.h"
+
 using namespace std;
 
-class PRAStar: public Search {
+class PRAStarMultiheap: public Search {
 public:
-	PRAStar(unsigned int n_threads, bool use_abst, bool async_send,
-			bool async_recv, unsigned int max_exp);
+	PRAStarMultiheap(unsigned int n_threads, bool use_abst, bool async_send,
+			bool async_recv, unsigned int max_exp, unsigned int heap_per_threads);
 
-	virtual ~PRAStar(void);
+	virtual ~PRAStarMultiheap(void);
 
 	virtual vector<State *> *search(Timer *t, State *init);
 	void set_done();
@@ -44,11 +46,11 @@ public:
 	virtual void output_stats(void);
 
 private:
-	class PRAStarThread: public Thread {
+	class PRAStarMultiheapThread: public Thread {
 	public:
-		PRAStarThread(PRAStar *p, vector<PRAStarThread *> *threads,
+		PRAStarMultiheapThread(PRAStarMultiheap *p, vector<PRAStarMultiheapThread *> *threads,
 				CompletionCounter* cc);
-		virtual ~PRAStarThread(void);
+		virtual ~PRAStarMultiheapThread(void);
 		virtual void run(void);
 
 		/**
@@ -88,10 +90,10 @@ private:
 		 * for self-sends). */
 		void do_sync_send(unsigned int dest_tid, State *c);
 
-		PRAStar *p;
+		PRAStarMultiheap *p;
 
 		/* List of the other threads */
-		vector<PRAStarThread *> *threads;
+		vector<PRAStarMultiheapThread *> *threads;
 
 		/* The incoming message queue. */
 		vector<State *> q;
@@ -109,20 +111,19 @@ private:
 		/* A pointer to the completion counter. */
 		CompletionCounter *cc;
 
-		friend class PRAStar;
+		friend class PRAStarMultiheap;
 
 		/* Search queues */
-		// TODO: This should be replaced by vector open list.
-		PQOpenList<State::PQOpsFPrime> open;
+		// TODO: Implement this multiheap.
+		PQMultiheapOpenList<State::PQOpsFPrime> open;
 
-		ClosedList closed; // TODO: Change the size of closed list.
+		ClosedList closed;
 		bool q_empty;
 
 		/* statistics */
 		double time_spinning;
 
 		unsigned int total_expansion;
-		unsigned int duplicate;
 	};
 
 	bool done;
@@ -130,8 +131,8 @@ private:
 	const unsigned int n_threads;
 	AtomicInt bound;
 	const Projection *project;
-	vector<PRAStarThread *> threads;
-	typename vector<PRAStarThread *>::iterator iter;
+	vector<PRAStarMultiheapThread *> threads;
+	typename vector<PRAStarMultiheapThread *>::iterator iter;
 
 	SolutionStream *solutions;
 
@@ -152,6 +153,8 @@ private:
 	double max_spinning;
 	double avg_open_size;
 	unsigned int max_open_size;
+
+	unsigned heap_per_thread;
 
 #if defined(COUNT_FS)
 	static F_hist fs;

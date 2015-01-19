@@ -27,6 +27,8 @@
 
 using namespace std;
 
+#define TABLESIZE 244140625
+
 class Tiles : public SearchDomain {
 public:
 	Tiles(istream &i, string cost);
@@ -40,6 +42,9 @@ public:
 	void print(ostream &o) const;
 	unsigned int get_width(void) const;
  	unsigned int get_height(void) const;
+ 	unsigned int get_size(void) const {
+ 		return width * height;
+ 	}
 
 	class ManhattanDist : public Heuristic {
 	public:
@@ -57,6 +62,51 @@ public:
 		unsigned int height;
 		vector<unsigned int> table;
 	};
+
+//#ifdef PATTERNDATABASES
+	class PatternDatabases : public Heuristic {
+	public:
+		PatternDatabases(const SearchDomain *d);
+		virtual ~PatternDatabases(void);
+		virtual fp_type compute(State *s) const;
+		void initDatabases(void);
+	private:
+		void readfile(unsigned char table[TABLESIZE], FILE* infile);
+		unsigned int hash0(unsigned char inv[]) const;
+		unsigned int hash1(unsigned char inv[]) const;
+		unsigned int hash2(unsigned char inv[]) const;
+		unsigned int hash3(unsigned char inv[]) const;
+		unsigned int hashref0(unsigned char inv[]) const;
+		unsigned int hashref1(unsigned char inv[]) const;
+		unsigned int hashref2(unsigned char inv[]) const;
+		unsigned int hashref3(unsigned char inv[]) const;
+
+		static unsigned char h0[TABLESIZE]; /* heuristic tables for pattern databases */
+		static unsigned char h1[TABLESIZE];
+
+		static const int Ntiles = 25;
+		/* the position of each tile in order, reflected about the main diagonal */
+		int ref[Ntiles] = { 0, 5, 10, 15, 20, 1, 6, 11, 16, 21, 2, 7, 12, 17, 22, 3,
+				8, 13, 18, 23, 4, 9, 14, 19, 24 };
+
+		/* rotates the puzzle 90 degrees */
+		int rot90[Ntiles] = { 20, 15, 10, 5, 0, 21, 16, 11, 6, 1, 22, 17, 12, 7, 2,
+				23, 18, 13, 8, 3, 24, 19, 14, 9, 4 };
+
+		/* composes the reflection and 90 degree rotation into a single array */
+		int rot90ref[Ntiles] = { 20, 21, 22, 23, 24, 15, 16, 17, 18, 19, 10, 11, 12,
+				13, 14, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4 };
+
+		/* rotates the puzzle 180 degrees */
+		int rot180[Ntiles] = { 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12,
+				11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0 };
+
+		/* composes the reflection and 180 degree rotation into a single array */
+		int rot180ref[Ntiles] = { 24, 19, 14, 9, 4, 23, 18, 13, 8, 3, 22, 17, 12, 7,
+				2, 21, 16, 11, 6, 1, 20, 15, 10, 5, 0 };
+
+	};
+//#endif
 
 	class Blind : public Heuristic {
 	public:

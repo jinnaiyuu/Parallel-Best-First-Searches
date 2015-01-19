@@ -325,6 +325,45 @@ fp_type Tsp::MinimumSpanningTree::mst(vector<bool> *not_visited) const {
 }
 
 /****************************************************************************/
+
+
+Tsp::RoundTripDistance::RoundTripDistance(const SearchDomain *d) :
+		Heuristic(d) {
+
+}
+
+fp_type Tsp::RoundTripDistance::compute(State *s) const {
+	TspState *state = static_cast<TspState*>(s);
+	vector<unsigned int> visited = state->get_visited(); // copy constructor
+
+	// If only goal left.
+	if (visited.size() == number_of_cities - 1) {
+		unsigned int current = visited.back();
+		return miles[current * number_of_cities];
+	}
+
+	// 1. List the cities unvisited and the city currently in.
+	vector<bool> not_visited(number_of_cities, true);
+	// -1 is to include city currently visiting
+	unsigned int current = 0;
+	if (visited.size() > 0) {
+		current = visited.back();
+		for (unsigned int i = 0; i < visited.size(); ++i) {
+			not_visited[visited[i]] = false;
+		}
+	}
+
+	double max_distance = 0.0;
+	for (unsigned int i = 0; i < number_of_cities; ++i) {
+		unsigned int m = miles[current * number_of_cities + i];
+		if (not_visited[i] && (m > max_distance)) {
+			max_distance = m;
+		}
+	}
+	return max_distance * 2 * 10000;
+}
+
+/****************************************************************************/
 /****************************************************************************/
 /****************************************************************************/
 

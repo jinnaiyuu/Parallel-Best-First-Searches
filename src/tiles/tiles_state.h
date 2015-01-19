@@ -44,7 +44,9 @@ private:
 	unsigned int blank;
 	uint64_t hash_val;
 
-	static unsigned int zbr_table[16][16]; // for 15 puzzle
+	// This should be put to tiles.h.
+	static unsigned int size;
+	static unsigned int zbr_table[25][25]; // The size isn't that problem.
 };
 
 

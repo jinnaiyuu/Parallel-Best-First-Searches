@@ -45,6 +45,8 @@
 
 #include "get_search.h"
 
+#include "astar_vector.h"
+#include "pastar_vector.h"
 #include "prastar_vector.h"
 
 #include <limits.h>
@@ -120,6 +122,10 @@ Search *get_search(int argc, char *argv[])
 
 	if (argc > 1 && strcmp(argv[1], "astar") == 0) {
 		return new AStar();
+
+	} else if (argc > 1 && sscanf(argv[1], "astar-vector-%u", &openlistsize) == 1) {
+		return new AStarVector(openlistsize);
+
 	} else if (argc > 1 && sscanf(argv[1], "wastar-%lf", &weight) == 1) {
 		return new AStar(false);
 	} else if (argc > 1 && sscanf(argv[1], "optimistic-%lf", &bound) == 1) {
@@ -146,6 +152,10 @@ Search *get_search(int argc, char *argv[])
 		return new KBFS(threads);
 	} else if (argc > 1 && sscanf(argv[1], "pastar-%u", &threads) == 1) {
 		return new PAStar(threads);
+
+	} else if (argc > 1 && sscanf(argv[1], "pastar-vector-%u-%u", &threads, &openlistsize) == 2) {
+		return new PAStarVector(threads, openlistsize);
+
 	} else if (argc > 1 && sscanf(argv[1], "lpastar-%lf-%u", &weight, &threads) == 2) {
 		return new LPAStar(threads);
 	} else if (argc > 1 && sscanf(argv[1], "prastar-%u", &threads) == 1) {

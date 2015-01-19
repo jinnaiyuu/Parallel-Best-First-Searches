@@ -123,7 +123,8 @@ void HashTable<Elm>::init(unsigned long s)
 template<class Elm>
 HashTable<Elm>::HashTable(void)
 {
-	init(1000000);
+	// TODO: This is way too naive. Should adjust to the domain, at least take prime number.
+	init(1000000); //9999943
 }
 
 template<class Elm>

@@ -31,7 +31,7 @@ using namespace std;
 
 int main(int argc, char *argv[])
 {
-	unsigned int timelimit = 10000;	// seconds
+	unsigned int timelimit = 20000;	// seconds
 	vector<State *> *path;
 	Search *search = get_search(argc, argv);
 
@@ -66,13 +66,18 @@ int main(int argc, char *argv[])
 //	HZero hzero(&g);
 //	g.set_heuristic(&hzero);
 	Tiles::ManhattanDist manhattan(&g);
+	Tiles::PatternDatabases pd(&g);
 	Tiles::Blind blind(&g);
 	if (argc >= 4 && (strcmp(argv[3], "blind") == 0)) {
 		g.set_heuristic(&blind);
+	} else if (argc >= 4 && (strcmp(argv[3], "pd") == 0)){
+		g.set_heuristic(&pd);
+		pd.initDatabases();
 	} else {
 		manhattan.set_weight(weight);
 		g.set_heuristic(&manhattan);
 	}
+
 
 
 #if defined(NDEBUG)

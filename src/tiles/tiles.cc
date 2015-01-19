@@ -9,6 +9,8 @@
  * \date 2008-11-03
  */
 
+#include <cstdio>
+
 #include <assert.h>
 #include <math.h>
 #include <stdlib.h>
@@ -19,6 +21,7 @@
 #include <map>
 #include <utility>
 #include <string>
+
 
 #include "tiles.h"
 #include "tiles_state.h"
@@ -47,10 +50,10 @@ Tiles::Tiles(istream &in, string c)
 	in >> height;
 	in >> width;
 
-/*
+
   cout << "height = " << height << endl;
   cout << "width = " << width << endl;
-*/
+
 
 	assert((width * height - 1) <= (sizeof(pow) * 8));
 	// 2^(w*h-1)
@@ -377,6 +380,136 @@ fp_type Tiles::ManhattanDist::compute_incr(TilesState *s,
 	assert(ret >= 0);
 	return ret;
 }
+
+/**************************************************************/
+//#ifdef PATTERNDATABASES
+
+Tiles::PatternDatabases::PatternDatabases(const SearchDomain *d) :
+	Heuristic(d){}
+
+Tiles::PatternDatabases::~PatternDatabases(void)
+{}
+
+void Tiles::PatternDatabases::initDatabases(void) {
+	FILE* infile = fopen("pat24.1256712.tab", "rb");
+	readfile(h0, infile);
+	fclose(infile);
+	printf("pattern 1 2 5 6 7 12 read in\n");
+	infile = fopen("pat24.34891314.tab", "rb");
+	readfile(h1, infile);
+	fclose(infile);
+	printf("pattern 3 4 8 9 13 14 read in\n");
+}
+
+void Tiles::PatternDatabases::readfile(unsigned char table[TABLESIZE], FILE* infile) {
+		int s[6]; /* positions of each pattern tile */
+		int index; /* direct access index */
+		int Ntiles = 25;
+		for (s[0] = 0; s[0] < Ntiles; s[0]++) /* generate each possible permutation */
+		{
+			for (s[1] = 0; s[1] < Ntiles; s[1]++) {
+				if (s[1] == s[0])
+					continue;
+				for (s[2] = 0; s[2] < Ntiles; s[2]++) {
+					if (s[2] == s[0] || s[2] == s[1])
+						continue;
+					for (s[3] = 0; s[3] < Ntiles; s[3]++) {
+						if (s[3] == s[0] || s[3] == s[1] || s[3] == s[2])
+							continue;
+						for (s[4] = 0; s[4] < Ntiles; s[4]++) {
+							if (s[4] == s[0] || s[4] == s[1] || s[4] == s[2]
+									|| s[4] == s[3])
+								continue;
+							for (s[5] = 0; s[5] < Ntiles; s[5]++) {
+								if (s[5] == s[0] || s[5] == s[1] || s[5] == s[2]
+										|| s[5] == s[3] || s[5] == s[4])
+									continue;
+								index = ((((s[0] * 25 + s[1]) * 25 + s[2]) * 25
+										+ s[3]) * 25 + s[4]) * 25 + s[5];
+								table[index] = getc(infile); // TODO: infile
+							}
+						}
+					}
+				}
+			}
+		}
+}
+
+fp_type Tiles::PatternDatabases::compute(State *s) const {
+	TilesState *state = static_cast<TilesState *>(s);
+	const vector<unsigned int>* tiles = state->get_tiles();
+
+	unsigned char inv[25]; // TODO: Would this be transaction?
+	for (int i = 0; i < Ntiles; ++i) {
+		inv[tiles->at(i)] = i;
+	}
+	unsigned int origin = hash0(inv) + hash1(inv) + hash2(inv) + hash3(inv);
+	unsigned int reflection = hashref0(inv) + hashref1(inv) + hashref2(inv)
+			+ hashref3(inv);
+//	printf("origin, reflection = %u, %u\n", origin, reflection);
+	return max(origin, reflection) * 10000;
+}
+
+unsigned int Tiles::PatternDatabases::hash0(unsigned char inv[]) const{
+	int hashval = ((((inv[1] * Ntiles + inv[2]) * Ntiles + inv[5]) * Ntiles
+			+ inv[6]) * Ntiles + inv[7]) * Ntiles + inv[12];
+	return (h0[hashval]);
+} /* total moves for this pattern */
+unsigned int Tiles::PatternDatabases::hashref0(unsigned char inv[]) const{
+	/* index into heuristic table */
+	int hashval = (((((ref[inv[5]] * Ntiles + ref[inv[10]]) * Ntiles
+			+ ref[inv[1]]) * Ntiles + ref[inv[6]]) * Ntiles + ref[inv[11]])
+			* Ntiles + ref[inv[12]]);
+	return (h0[hashval]);
+} /* total moves for this pattern */
+
+unsigned int Tiles::PatternDatabases::hash1(unsigned char inv[]) const {
+	/* index into heuristic table */
+	int hashval = ((((inv[3] * Ntiles + inv[4]) * Ntiles + inv[8]) * Ntiles
+			+ inv[9]) * Ntiles + inv[13]) * Ntiles + inv[14];
+	return (h1[hashval]);
+} /* total moves for this pattern */
+unsigned int Tiles::PatternDatabases::hashref1(unsigned char inv[]) const {
+	/* index into heuristic table */
+	int hashval =
+			(((((ref[inv[15]] * Ntiles + ref[inv[20]]) * Ntiles
+					+ ref[inv[16]]) * Ntiles + ref[inv[21]]) * Ntiles
+					+ ref[inv[17]]) * Ntiles + ref[inv[22]]);
+	return (h1[hashval]);
+} /* total moves for this pattern */
+unsigned int Tiles::PatternDatabases::hash2(unsigned char inv[]) const{
+	/* index into heuristic table */
+	int hashval = ((((rot180[inv[21]] * Ntiles + rot180[inv[20]]) * Ntiles
+			+ rot180[inv[16]]) * Ntiles + rot180[inv[15]]) * Ntiles
+			+ rot180[inv[11]]) * Ntiles + rot180[inv[10]];
+	return (h1[hashval]);
+} /* total moves for this pattern */
+unsigned int Tiles::PatternDatabases::hashref2(unsigned char inv[]) const {
+	/* index into heuristic table */
+	int hashval = (((((rot180ref[inv[9]] * Ntiles + rot180ref[inv[4]])
+			* Ntiles + rot180ref[inv[8]]) * Ntiles + rot180ref[inv[3]])
+			* Ntiles + rot180ref[inv[7]]) * Ntiles + rot180ref[inv[2]]);
+	return (h1[hashval]);
+} /* total moves for this pattern */
+unsigned int Tiles::PatternDatabases::hash3(unsigned char inv[]) const{
+	/* index into heuristic table */
+	int hashval = ((((rot90[inv[19]] * Ntiles + rot90[inv[24]]) * Ntiles
+			+ rot90[inv[18]]) * Ntiles + rot90[inv[23]]) * Ntiles
+			+ rot90[inv[17]]) * Ntiles + rot90[inv[22]];
+	return (h1[hashval]);
+} /* total moves for this pattern */
+unsigned int Tiles::PatternDatabases::hashref3(unsigned char inv[]) const{
+	/* index into heuristic table */
+	int hashval = (((((rot90ref[inv[23]] * Ntiles + rot90ref[inv[24]])
+			* Ntiles + rot90ref[inv[18]]) * Ntiles + rot90ref[inv[19]])
+			* Ntiles + rot90ref[inv[13]]) * Ntiles + rot90ref[inv[14]]);
+	return (h1[hashval]);
+} /* total moves for this pattern */
+
+
+unsigned char Tiles::PatternDatabases::h0[TABLESIZE]; /* heuristic tables for pattern databases */
+unsigned char Tiles::PatternDatabases::h1[TABLESIZE];
+//#endif // 24Puzzle
 
 /**************************************************************/
 

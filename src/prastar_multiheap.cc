@@ -24,7 +24,7 @@ extern "C" {
 #include "util/mutex.h"
 #include "util/msg_buffer.h"
 #include "util/sync_solution_stream.h"
-#include "prastar.h"
+#include "prastar_multiheap.h".h"
 #include "projection.h"
 #include "search.h"
 #include "state.h"
@@ -32,13 +32,13 @@ extern "C" {
 using namespace std;
 
 #if defined(COUNT_FS)
-F_hist PRAStar::fs;
+F_hist PRAStarMultiheap::fs;
 #endif // COUNT_FS
 
 
-PRAStar::PRAStarThread::PRAStarThread(PRAStar *p,
-		vector<PRAStarThread *> *threads, CompletionCounter* cc) :
-		p(p), threads(threads), cc(cc), q_empty(true), total_expansion(0), duplicate(0) {
+PRAStarMultiheap::PRAStarMultiheapThread::PRAStarMultiheapThread(PRAStarMultiheap *p,
+		vector<PRAStarMultiheapThread *> *threads, CompletionCounter* cc) :
+		p(p), threads(threads), cc(cc), q_empty(true), total_expansion(0) {
 	expansions = 0;
 	time_spinning = 0;
 	out_qs.resize(threads->size(), NULL);
@@ -46,28 +46,27 @@ PRAStar::PRAStarThread::PRAStarThread(PRAStar *p,
 }
 
 
-PRAStar::PRAStarThread::~PRAStarThread(void) {
+PRAStarMultiheap::PRAStarMultiheapThread::~PRAStarMultiheapThread(void) {
 	vector<MsgBuffer<State*> *>::iterator i;
 	for (i = out_qs.begin(); i != out_qs.end(); i++)
 		if (*i)
 			delete *i;
 	printf("expd = %u\n", total_expansion);
-	printf("duplicate = %u\n", duplicate);
 }
 
 
-vector<State*> *PRAStar::PRAStarThread::get_queue(void) {
+vector<State*> *PRAStarMultiheap::PRAStarMultiheapThread::get_queue(void) {
 	return &q;
 }
 
 
-Mutex *PRAStar::PRAStarThread::get_mutex(void) {
+Mutex *PRAStarMultiheap::PRAStarMultiheapThread::get_mutex(void) {
 	return &mutex;
 }
 
 
-void PRAStar::PRAStarThread::post_send(void *t) {
-	PRAStarThread *thr = (PRAStarThread*) t;
+void PRAStarMultiheap::PRAStarMultiheapThread::post_send(void *t) {
+	PRAStarMultiheapThread *thr = (PRAStarMultiheapThread*) t;
 	if (thr->completed) {
 		thr->cc->uncomplete();
 		thr->completed = false;
@@ -76,7 +75,7 @@ void PRAStar::PRAStarThread::post_send(void *t) {
 }
 
 
-bool PRAStar::PRAStarThread::flush_sends(void) {
+bool PRAStarMultiheap::PRAStarMultiheapThread::flush_sends(void) {
 	unsigned int i;
 	bool has_sends = false;
 
@@ -101,7 +100,7 @@ bool PRAStar::PRAStarThread::flush_sends(void) {
  * Flush the queue
  */
 
-void PRAStar::PRAStarThread::flush_receives(bool has_sends) {
+void PRAStarMultiheap::PRAStarMultiheapThread::flush_receives(bool has_sends) {
 #if defined(INSTRUMENTED)
 	Timer t;
 	bool timer_started = false;
@@ -155,10 +154,8 @@ void PRAStar::PRAStarThread::flush_receives(bool has_sends) {
 				dup->update(c->get_parent(), c->get_c(), c->get_g());
 				if (dup->is_open())
 					open.see_update(dup);
-				else {
-					++duplicate;
+				else
 					open.add(dup);
-				}
 			}
 			delete c;
 		} else {
@@ -172,7 +169,7 @@ void PRAStar::PRAStarThread::flush_receives(bool has_sends) {
 }
 
 
-void PRAStar::PRAStarThread::do_async_send(unsigned int dest_tid, State *c) {
+void PRAStarMultiheap::PRAStarMultiheapThread::do_async_send(unsigned int dest_tid, State *c) {
 	if (!out_qs[dest_tid]) {
 		Mutex *lk = threads->at(dest_tid)->get_mutex();
 		vector<State*> *qu = threads->at(dest_tid)->get_queue();
@@ -184,8 +181,8 @@ void PRAStar::PRAStarThread::do_async_send(unsigned int dest_tid, State *c) {
 }
 
 
-void PRAStar::PRAStarThread::do_sync_send(unsigned int dest_tid, State *c) {
-	PRAStarThread *dest = threads->at(dest_tid);
+void PRAStarMultiheap::PRAStarMultiheapThread::do_sync_send(unsigned int dest_tid, State *c) {
+	PRAStarMultiheapThread *dest = threads->at(dest_tid);
 
 	dest->get_mutex()->lock();
 	dest->get_queue()->push_back(c);
@@ -194,12 +191,17 @@ void PRAStar::PRAStarThread::do_sync_send(unsigned int dest_tid, State *c) {
 }
 
 
-void PRAStar::PRAStarThread::send_state(State *c) {
+void PRAStarMultiheap::PRAStarMultiheapThread::send_state(State *c) {
 	unsigned long hash =
 			p->use_abstraction ? p->project->project(c)
 //					 : c->hash();
 					: c->zbrhash();
-	unsigned int dest_tid = threads->at(hash % p->n_threads)->get_id();
+
+	// TODO: I think this would work fine. Each thread only need to do
+	// hash % p->heap_per_thread
+	// to find the right heap.
+	unsigned int dest_tid =
+			threads->at(hash % (p->n_threads * p->heap_per_thread) / p->heap_per_thread)->get_id();
 	bool self_add = dest_tid == this->get_id();
 
 	assert(p->n_threads != 1 || self_add);
@@ -230,7 +232,7 @@ void PRAStar::PRAStarThread::send_state(State *c) {
 }
 
 
-State *PRAStar::PRAStarThread::take(void) {
+State *PRAStarMultiheap::PRAStarMultiheapThread::take(void) {
 	bool has_sends = true;
 
 	expansions += 1;
@@ -263,7 +265,7 @@ State *PRAStar::PRAStarThread::take(void) {
  * Run the search thread.
  */
 
-void PRAStar::PRAStarThread::run(void) {
+void PRAStarMultiheap::PRAStarMultiheapThread::run(void) {
 	vector<State *> *children = NULL;
 
 	while (!p->is_done()) {
@@ -301,11 +303,11 @@ void PRAStar::PRAStarThread::run(void) {
 /************************************************************/
 
 
-PRAStar::PRAStar(unsigned int n_threads, bool use_abst, bool a_send,
-		bool a_recv, unsigned int max_e) :
+PRAStarMultiheap::PRAStarMultiheap(unsigned int n_threads, bool use_abst, bool a_send,
+		bool a_recv, unsigned int max_e, unsigned int heap_per_thread) :
 		n_threads(n_threads), bound(fp_infinity), project(NULL), use_abstraction(
 				use_abst), async_send(a_send), async_recv(a_recv), max_exp(
-				max_e) {
+				max_e), heap_per_thread(heap_per_thread) {
 	if (max_e != 0 && !async_send) {
 		cerr << "Max expansions must be zero for synchronous sends" << endl;
 		abort();
@@ -314,7 +316,7 @@ PRAStar::PRAStar(unsigned int n_threads, bool use_abst, bool a_send,
 }
 
 
-PRAStar::~PRAStar(void) {
+PRAStarMultiheap::~PRAStarMultiheap(void) {
 	for (iter = threads.begin(); iter != threads.end(); iter++) {
 		if (*iter)
 			delete (*iter);
@@ -322,17 +324,17 @@ PRAStar::~PRAStar(void) {
 }
 
 
-void PRAStar::set_done() {
+void PRAStarMultiheap::set_done() {
 	done = true;
 }
 
 
-bool PRAStar::is_done() {
+bool PRAStarMultiheap::is_done() {
 	return done;
 }
 
 
-void PRAStar::set_path(vector<State *> *p) {
+void PRAStarMultiheap::set_path(vector<State *> *p) {
 	fp_type b, oldb;
 
 	assert(solutions);
@@ -350,7 +352,7 @@ void PRAStar::set_path(vector<State *> *p) {
 }
 
 
-vector<State *> *PRAStar::search(Timer *timer, State *init) {
+vector<State *> *PRAStarMultiheap::search(Timer *timer, State *init) {
 	solutions = new SyncSolutionStream(timer, 0.0001);
 	project = init->get_domain()->get_projection();
 
@@ -358,7 +360,7 @@ vector<State *> *PRAStar::search(Timer *timer, State *init) {
 
 	threads.resize(n_threads, NULL);
 	for (unsigned int i = 0; i < n_threads; i += 1)
-		threads.at(i) = new PRAStarThread(this, &threads, &cc);
+		threads.at(i) = new PRAStarMultiheapThread(this, &threads, &cc);
 
 	if (use_abstraction)
 		threads.at(project->project(init) % n_threads)->open.add(init);
@@ -376,7 +378,7 @@ vector<State *> *PRAStar::search(Timer *timer, State *init) {
 }
 
 
-void PRAStar::output_stats(void) {
+void PRAStarMultiheap::output_stats(void) {
 #if defined(QUEUE_SIZES)
 	max_open_size = 0;
 	avg_open_size = 0;
@@ -407,7 +409,7 @@ void PRAStar::output_stats(void) {
 	max_spinning = 0.0;
 	ThreadSpecific<double> lock_times = Mutex::get_lock_times();
 	for (iter = threads.begin(); iter != threads.end(); iter++) {
-		PRAStarThread *thr = *iter;
+		PRAStarMultiheapThread *thr = *iter;
 		double t = thr->time_spinning;
 		double l = lock_times.get_value_for(thr->get_id());
 		if (t > max_spinning)

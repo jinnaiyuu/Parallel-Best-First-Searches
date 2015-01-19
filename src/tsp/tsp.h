@@ -62,6 +62,12 @@ public:
 		fp_type mst(vector<bool> *not_visited) const;
 	};
 
+	class RoundTripDistance : public Heuristic {
+	public:
+		RoundTripDistance(const SearchDomain *d);
+		fp_type compute(State *s) const;
+	};
+
 	class Blind : public Heuristic {
 	public:
 		Blind(const SearchDomain *d);

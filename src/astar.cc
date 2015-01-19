@@ -49,6 +49,7 @@ vector<State *> *AStar::search(Timer *t, State *init)
 			State *dup = closed.lookup(c);
 			if (dup) {
 				if (dup->get_g() > c->get_g()) {
+				  // TODO: count how much duplication occurs
 					dup->update(c->get_parent(), c->get_c(), c->get_g());
 					if (dup->is_open())
 						open.see_update(dup);

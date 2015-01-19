@@ -115,8 +115,11 @@ vector<State *> *PBNFSearch::PBNFThread::search_nblock(NBlock *n)
 				continue;
 			}
 			unsigned int block = search->project->project(*iter);
-			PQOpenList<State::PQOpsFPrime> *next_open =
-				&graph->get_nblock(block)->open;
+			// TODO:
+//			PQOpenList<State::PQOpsFPrime> *next_open =
+			PQVectorOpenList *next_open =
+			&graph->get_nblock(block)->open;
+
 			ClosedList *next_closed =
 				&graph->get_nblock(block)->closed;
 			State *dup = next_closed->lookup(*iter);
@@ -207,6 +210,8 @@ PBNFSearch::PBNFSearch(unsigned int n_threads,
 	  graph(NULL),
 	  min_expansions(min_e)
 {
+	printf("vector\n");
+
 #if defined(INSTRUMENTED)
 	sum = 0.0;
 	num = 0;

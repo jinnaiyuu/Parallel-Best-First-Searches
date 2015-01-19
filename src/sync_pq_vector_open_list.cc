@@ -19,7 +19,9 @@
 #include "util/priority_queue.h"
 #include "util/cpu_timer.h"
 */
-#include "pq_vector_open_list.h"
+#include <pthread.h>
+
+#include "sync_pq_vector_open_list.h"
 
 using namespace std;
 
@@ -27,12 +29,13 @@ using namespace std;
  * Create a new PQ open list.
  */
 // template<class PQCompare>
-	PQVectorOpenList::PQVectorOpenList(void)
+	SyncPQVectorOpenList::SyncPQVectorOpenList(void)
 : fill(0), min(0), pq(120)
 {
+		pthread_mutex_init(&mutex, NULL);
 }
 
-void PQVectorOpenList::changeSize(unsigned int size)
+void SyncPQVectorOpenList::changeSize(unsigned int size)
 {
 	// This instruction would take a bit of time.
 	pq.resize(size);
@@ -43,16 +46,17 @@ void PQVectorOpenList::changeSize(unsigned int size)
  * \param s The state to add.
  */
 // template<class PQCompare>
-void PQVectorOpenList::add(State *s)
+void SyncPQVectorOpenList::add(State *s)
 {
-//	printf("PQVectorOpenList::add\n");
+	pthread_mutex_lock(&mutex);
+//	printf("SyncPQVectorOpenList::add\n");
 //	printf("f,h = %lu, %lu\n", s->get_f()/10000, s->get_h()/10000);
-// 	Ok, this does work for float point domain. But does not return optimal result. BUG.
 	int p0 = s->get_f()/10000;
 	assert(p0<120 && p0>=0);
 
 	if (p0 >= static_cast<int>(pq.size())) {
 //		printf("f going crazy.\n");
+		pthread_mutex_unlock(&mutex);
 		return;
 	}
 
@@ -61,6 +65,8 @@ void PQVectorOpenList::add(State *s)
 
 	pq[p0].push(s, static_cast<int>(s->get_g()/10000));
 	fill++;
+	pthread_mutex_unlock(&mutex);
+
 }
 
 /**
@@ -68,26 +74,34 @@ void PQVectorOpenList::add(State *s)
  * \return The front of the priority queue.
  */
 // template<class PQCompare>
-State *PQVectorOpenList::take(void)
+State *SyncPQVectorOpenList::take(void)
 {
-//	printf("PQVectorOpenList::take\n");
+	pthread_mutex_lock(&mutex);
+
+//	printf("SyncPQVectorOpenList::take\n");
 
 	for ( ; (unsigned int) min < pq.size() && pq[min].empty() ; min++) {
 		;
 	}
 	fill--;
-	return pq[min].pop();
+	State* ret = pq[min].pop();
+	pthread_mutex_unlock(&mutex);
+
+	return ret;
 }
 
 /**
  * Peek at the top element.
  */
 // template<class PQCompare>
- State * PQVectorOpenList::peek(void)
+State * SyncPQVectorOpenList::peek(void)
 {
+	pthread_mutex_lock(&mutex);
+	State* ret = pq[min].pop();
 	 // TODO: this function would not work well.
-//	printf("PQVectorOpenList::peek\n");
-	return pq[min].pop();
+//	printf("SyncPQVectorOpenList::peek\n");
+	pthread_mutex_unlock(&mutex);
+	return ret;
 }
 
 /**
@@ -95,18 +109,21 @@ State *PQVectorOpenList::take(void)
  * \return True if the open list is empty, false if not.
  */
 // template<class PQCompare>
- bool PQVectorOpenList::empty(void)
+bool SyncPQVectorOpenList::empty(void)
 {
-	return (fill==0);
+	pthread_mutex_lock(&mutex);
+	bool ret = (fill==0);
+	pthread_mutex_unlock(&mutex);
+	return ret;
 }
 
 /**
  * Delete all of the states on the open list.
  */
 // template<class PQCompare>
- void PQVectorOpenList::delete_all_states(void)
+ void SyncPQVectorOpenList::delete_all_states(void)
 {
-		printf("PQVectorOpenList::delete_all_states\n");
+		printf("SyncPQVectorOpenList::delete_all_states\n");
 	// TODO: Need to implement in term of vector<vector<state*>>
 //	while (!pq.empty())
 //		delete pq.take();
@@ -119,9 +136,9 @@ State *PQVectorOpenList::take(void)
  * Prune all of the states.
  */
 // template<class PQCompare>
- void PQVectorOpenList::prune(void)
+ void SyncPQVectorOpenList::prune(void)
 {
-		printf("PQVectorOpenList::prune\n");
+	//printf("SyncPQVectorOpenList::prune\n");
 	// TODO: not sure what this function is for.
 /*
 	for (int i = 0; i < fill; i += 1)
@@ -133,7 +150,7 @@ State *PQVectorOpenList::take(void)
 }
 
 // template<class PQCompare>
- unsigned int PQVectorOpenList::size(void)
+ unsigned int SyncPQVectorOpenList::size(void)
 {
 	return fill;
 }
@@ -143,25 +160,25 @@ State *PQVectorOpenList::take(void)
  * updating states which are open.
  */
 // template<class PQCompare>
-	void PQVectorOpenList::see_update(State *s)
+	void SyncPQVectorOpenList::see_update(State *s)
 {
-//		printf("PQVectorOpenList::see_update\n");
-/*
+		printf("SyncPQVectorOpenList::see_update\n");
+	/*
 	start_queue_timer();
 	pq.see_update(get_index(s));
 	stop_queue_timer();
 
 	set_best_val(comp.get_value(pq.front()));
-*/
+	*/
 }
 
 /**
  * Remove the given state from the PQ.
  */
 // template<class PQCompare>
-	void PQVectorOpenList::remove(State *s)
+	void SyncPQVectorOpenList::remove(State *s)
 {
-	printf("PQVectorOpenList::remove\n");
+	printf("SyncPQVectorOpenList::remove\n");
 	// TODO: Why would you need this function?
 	/*
 	start_queue_timer();
@@ -181,9 +198,9 @@ State *PQVectorOpenList::take(void)
  * Resort the whole thing.
  */
 // template<class PQCompare>
-void PQVectorOpenList::resort(void)
+void SyncPQVectorOpenList::resort(void)
 {
-	printf("PQVectorOpenList::resort\n");
+	printf("SyncPQVectorOpenList::resort\n");
 	// TODO: What is this function for?
 	/*
 	start_queue_timer();
@@ -198,9 +215,9 @@ void PQVectorOpenList::resort(void)
 }
 
 // template<class PQCompare>
-void PQVectorOpenList::verify(void)
+void SyncPQVectorOpenList::verify(void)
 {
-	printf("PQVectorOpenList::verify\n");
+	printf("SyncPQVectorOpenList::verify\n");
 	/*
 	assert(pq.heap_holds(0, pq.get_fill() - 1));
 	assert(pq.indexes_match());
@@ -208,9 +225,9 @@ void PQVectorOpenList::verify(void)
 }
 
 // template<class PQCompare>
-list<State*> *PQVectorOpenList::states(void)
+list<State*> *SyncPQVectorOpenList::states(void)
 {
-	printf("PQVectorOpenList::states\n");
+	printf("SyncPQVectorOpenList::states\n");
 	return NULL;
 //	return pq.to_list();
 }

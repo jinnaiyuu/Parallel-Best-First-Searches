@@ -61,11 +61,14 @@ int main(int argc, char *argv[]) {
 
 //	printf("MSP\n");
 	Tsp::MinimumSpanningTree msp(&g);
+	Tsp::RoundTripDistance rtd(&g);
 	Tsp::Blind blind(&g);
 // If parameter given as blind, then run blind heuristic.
 	if (argc >= 3 && (strcmp(argv[2], "blind") == 0)) {
 //		printf("blind\n");
 		g.set_heuristic(&blind);
+	} else if (argc >= 3 &&(strcmp(argv[2], "round") == 0)){
+		g.set_heuristic(&rtd);
 	} else {
 		g.set_heuristic(&msp);
 	}
