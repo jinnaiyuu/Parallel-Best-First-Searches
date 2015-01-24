@@ -22,34 +22,56 @@
 
 using namespace std;
 
+
+// So far only single hash.
+void TilesState::compute_closed_hash(void) {
+	Tiles * t = static_cast<Tiles*>(domain);
+	switch(t->get_closed_hash()) {
+	case 0: // Perfect Hash
+//		printf("perf closed\n");
+		hash_val = perfect_hash(t->get_n_threads());
+		break;
+	default:
+//		printf("error closed\n");
+		assert(false);
+		hash_val = perfect_hash(1);
+		break;
+	}
+//	printf("closed = %u\n", hash_val);
+}
 //
 // This technique is from Korf, R.E. and Schultze P, "Large-Scale
 // Parallel Breadth-First Search, AAAI-05.
 //
-void TilesState::compute_hash(void) {
+uint64_t TilesState::perfect_hash(unsigned int n_threads) {
 	unsigned int bits = 0;
 	const Tiles *t = static_cast<const Tiles *>(domain);
 	const vector<uint64_t> *ones = t->get_ones();
 	const vector<uint64_t> *fact_ary = t->get_fact_ary();
 
-	hash_val = 0;
+	uint64_t hash = 0;
+//	hash_val = 0;
 	for (int i = tiles.size() - 1; i >= 0; i -= 1) {
 		uint64_t k = tiles[i];
 		uint64_t mask = ~((~0) << k);
 		uint64_t v = mask & bits;
 		uint64_t d = k - ones->at(v);
-		hash_val += d * fact_ary->at(i);
+		hash += d * fact_ary->at(i);
 		bits |= 1 << k;
 	}
-//	printf("h = %lu\n", this->h);
 
+	assert(n_threads > 0);
+//	printf("n_threads = %u\n", n_threads);
+	hash = hash / static_cast<uint64_t>(n_threads);
+//	printf("perfect h = %lu\n", hash);
+	return hash;
 }
 
 TilesState::TilesState(SearchDomain *d, State *parent, fp_type c, fp_type g,
 		fp_type h_val, vector<unsigned int> tiles, unsigned int blank) :
 		State(d, parent, c, g), tiles(tiles), blank(blank) {
 	this->h = h_val;
-	compute_hash();
+	compute_closed_hash();
 }
 
 TilesState::TilesState(SearchDomain *d, State *parent, fp_type c, fp_type g,
@@ -61,7 +83,7 @@ TilesState::TilesState(SearchDomain *d, State *parent, fp_type c, fp_type g,
 	else
 		this->h = 0;
 	assert(this->h == 0 ? is_goal() : 1);
-	compute_hash();
+	compute_closed_hash();
 }
 
 /**
@@ -144,14 +166,39 @@ void TilesState::init_zbrhash() {
 	*/
 }
 
-unsigned int TilesState::zbrhash(void) {
+unsigned int TilesState::dist_hash(void) {
+	Tiles * t = static_cast<Tiles*>(domain);
+	unsigned int hash = 0;
+	switch(t->get_dist_hash()) {
+	case 0:
+//		printf("zobrist hash\n");
+		hash =  zobrist_hash();
+		break;
+	case 1:
+//		printf("residual\n");
+		hash =  perf_residual_hash(); // Simple Simple hash
+		break;
+	default:
+		assert(false);
+		break;
+	}
+//	printf("dist = %u\n", hash % t->get_n_threads());
+	return hash;
+}
+
+unsigned int TilesState::zobrist_hash(void) {
 	unsigned int zbr = 0;
 
 	for (unsigned int pos = 0; pos < size; ++pos) {
 		zbr = zbr ^ zbr_table[tiles[pos]][pos];
 	}
-//	printf("zbr = %d\n", zbr % 8);
+//	printf("zbr = %d\n", zbr);
 	return zbr;
+}
+
+// This is actually just a perfect hash returning.
+unsigned int TilesState::perf_residual_hash(void) {
+	return perfect_hash(1);
 }
 
 unsigned int TilesState::size;

@@ -38,7 +38,7 @@ F_hist PRAStar::fs;
 
 PRAStarVector::PRAStarThread::PRAStarThread(PRAStarVector *p,
 		vector<PRAStarThread *> *threads, CompletionCounter* cc) :
-		p(p), threads(threads), cc(cc), q_empty(true) {
+		p(p), threads(threads), cc(cc), closed(p->closed_list_size), q_empty(true){
 	expansions = 0;
 	time_spinning = 0;
 	out_qs.resize(threads->size(), NULL);
@@ -195,8 +195,8 @@ void PRAStarVector::PRAStarThread::do_sync_send(unsigned int dest_tid, State *c)
 void PRAStarVector::PRAStarThread::send_state(State *c) {
 	unsigned long hash =
 			p->use_abstraction ? p->project->project(c)
-				//	: c->hash();
-	: c->zbrhash();
+					: c->dist_hash();
+//	: c->zbrhash();
 	unsigned int dest_tid = threads->at(hash % p->n_threads)->get_id();
 	bool self_add = dest_tid == this->get_id();
 
@@ -302,14 +302,27 @@ PRAStarVector::PRAStarVector(unsigned int n_threads, bool use_abst, bool a_send,
 		bool a_recv, unsigned int max_e, unsigned int openlistsize_) :
 		n_threads(n_threads), bound(fp_infinity), project(NULL), use_abstraction(
 				use_abst), async_send(a_send), async_recv(a_recv), max_exp(
-				max_e), openlistsize(openlistsize_) {
+				max_e), closed_list_size(1000000), openlistsize(openlistsize_) {
 	if (max_e != 0 && !async_send) {
 		cerr << "Max expansions must be zero for synchronous sends" << endl;
 		abort();
 	}
 	done = false;
+	printf("closedlistsize = %u\n", closed_list_size);
 }
 
+PRAStarVector::PRAStarVector(unsigned int n_threads, bool use_abst, bool a_send,
+		bool a_recv, unsigned int max_e, unsigned int openlistsize_, unsigned int closed_list_size_):
+		n_threads(n_threads), bound(fp_infinity), project(NULL), use_abstraction(
+				use_abst), async_send(a_send), async_recv(a_recv), max_exp(
+				max_e), closed_list_size(closed_list_size_), openlistsize(openlistsize_) {
+	if (max_e != 0 && !async_send) {
+		cerr << "Max expansions must be zero for synchronous sends" << endl;
+		abort();
+	}
+	done = false;
+	printf("closedlistsize = %u\n", closed_list_size);
+}
 
 PRAStarVector::~PRAStarVector(void) {
 	for (iter = threads.begin(); iter != threads.end(); iter++) {

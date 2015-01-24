@@ -119,10 +119,15 @@ Search *get_search(int argc, char *argv[])
 	double bound;
 
 	unsigned int openlistsize = 0;
+	unsigned int closedlistsize = 0;
+
 
 	if (argc > 1 && strcmp(argv[1], "astar") == 0) {
 		return new AStar();
 
+	// astar in vector
+	} else if (argc > 1 && sscanf(argv[1], "astar-vector-%u-%u", &openlistsize, &closedlistsize) == 2) {
+		return new AStarVector(openlistsize, closedlistsize);
 	} else if (argc > 1 && sscanf(argv[1], "astar-vector-%u", &openlistsize) == 1) {
 		return new AStarVector(openlistsize);
 
@@ -153,6 +158,7 @@ Search *get_search(int argc, char *argv[])
 	} else if (argc > 1 && sscanf(argv[1], "pastar-%u", &threads) == 1) {
 		return new PAStar(threads);
 
+	// Parallel A* in vector
 	} else if (argc > 1 && sscanf(argv[1], "pastar-vector-%u-%u", &threads, &openlistsize) == 2) {
 		return new PAStarVector(threads, openlistsize);
 
@@ -165,8 +171,14 @@ Search *get_search(int argc, char *argv[])
 	} else if (argc > 1 && sscanf(argv[1], "hdastar-%u-%u", &max_e, &threads) == 2) {
 		return new PRAStar(threads, false, true, true, max_e);
 
+
+	// HDA* in vector
 //	} else if (argc > 1 && sscanf(argv[1], "hdastar-vector-%u-%u", &max_e, &threads) == 2) {
 //		return new PRAStarVector(threads, false, true, true, max_e);
+	} else if (argc > 1 && sscanf(argv[1], "hdastar-vector-%u-%u-%u-%u", &max_e, &threads, &openlistsize, &closedlistsize) == 4) {
+		// This is for grid path-finding. Actually we only need this thing.
+		return new PRAStarVector(threads, false, true, true, max_e, openlistsize, closedlistsize);
+
 	} else if (argc > 1 && sscanf(argv[1], "hdastar-vector-%u-%u-%u", &max_e, &threads, &openlistsize) == 3) {
 		// This is for grid path-finding. Actually we only need this thing.
 		return new PRAStarVector(threads, false, true, true, max_e, openlistsize);

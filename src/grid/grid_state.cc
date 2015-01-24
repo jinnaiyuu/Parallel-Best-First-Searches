@@ -111,6 +111,6 @@ int GridState::get_y(void) const
 	return y;
 }
 
-unsigned int GridState::zbrhash(void){
+unsigned int GridState::dist_hash(void){
  return get_x()*3 + get_y()*7;
 }

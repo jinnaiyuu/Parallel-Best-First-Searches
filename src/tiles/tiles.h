@@ -46,6 +46,14 @@ public:
  		return width * height;
  	}
 
+ 	// Hash module methods
+ 	unsigned int get_n_threads(void) const {return n_threads;};
+ 	unsigned int get_closed_hash(void) const {return closed_hash;};
+ 	unsigned int get_dist_hash(void) const {return dist_hash;};
+ 	void set_n_threads(unsigned int a) {n_threads = a;};
+ 	void set_closed_hash(unsigned int a) {closed_hash = a;};
+ 	void set_dist_hash(unsigned int a) {dist_hash = a;};
+
 	class ManhattanDist : public Heuristic {
 	public:
 		ManhattanDist(const SearchDomain *d);
@@ -271,6 +279,11 @@ private:
 	vector<unsigned int> initial;
 	unsigned int initial_blank;
 	TilesState *goal;
+
+	unsigned int n_threads;
+	unsigned int closed_hash;
+	unsigned int dist_hash;
+
 
 	/* The cost function. */
 	TilesCostFunction &cost;

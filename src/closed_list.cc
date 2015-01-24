@@ -25,6 +25,7 @@ ClosedList::ClosedList(unsigned long s)
 {
 }
 
+
 ClosedList::~ClosedList(void)
 {
 	prune();

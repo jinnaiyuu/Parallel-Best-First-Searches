@@ -18,6 +18,11 @@
 #include "../state.h"
 #include "../search_domain.h"
 
+// Enable 128 bit integer. It is not the optimal way to implement.
+//#include <stdint.h>
+//typedef unsigned int uint128_t __attribute__((mode(TI)));
+
+
 using namespace std;
 
 // TspState contains information of 
@@ -40,7 +45,7 @@ public:
 
 	// zobrist hash can be given by visited and visiting.
 	void init_zbrhash(void);
-	unsigned int zbrhash(void);
+	unsigned int dist_hash(void);
 	unsigned int inc_zbrhash(void);
 	unsigned int get_zbr(void){return zbr_val;};
 

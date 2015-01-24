@@ -41,6 +41,7 @@ using namespace std;
 Tiles::Tiles(istream &in, string c)
 	: cost(get_cost_function_by_name(c))
 {
+	printf("tiles init\n");
 	unsigned int pos;
 	unsigned int g_blank = 0;
 	char buff[1024];
@@ -109,9 +110,16 @@ Tiles::Tiles(istream &in, string c)
 	for (unsigned int i = 1; i < (width * height) + 1; i += 1)
 		fact_ary[i] = fact_ary[i - 1] * i;
 
+	closed_hash = 0;
+	n_threads = 1;
+	dist_hash = 0;
+
+	printf("init TilesState\n");
 	goal = new TilesState(this, NULL, 0, 0, 0, g, g_blank);
 
+	printf("zbr");
 	goal->init_zbrhash();
+	printf(" done\n");
 }
 
 const vector<uint64_t> *Tiles::get_ones() const

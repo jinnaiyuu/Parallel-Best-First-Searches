@@ -37,9 +37,19 @@ public:
 	const vector<unsigned int> *get_tiles(void) const;
 	unsigned int get_blank(void) const;
 	void init_zbrhash(void);
+
+	unsigned int dist_hash(void); // compute hash for distribution
+
 private:
-	void compute_hash(void);
-	unsigned int zbrhash(void);
+	// Hash for closed list
+	void compute_closed_hash(void);
+	uint64_t perfect_hash(unsigned int n_threads); // closedh = 0
+
+
+	// Hash for distribution
+	unsigned int zobrist_hash(void); // disth = 0
+	unsigned int perf_residual_hash(void); // disth = 1
+
 	vector<unsigned int> tiles;
 	unsigned int blank;
 	uint64_t hash_val;

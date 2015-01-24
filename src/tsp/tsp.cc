@@ -63,7 +63,7 @@ Tsp::Tsp(istream &s)
 
 	// Calculate the distance for each cities.
 	for (unsigned int from = 0; from < number_of_cities; ++from) {
-		for (unsigned int to = 0; to < number_of_cities; ++to) {
+		for (unsigned int to = from + 1; to < number_of_cities; ++to) {
 			if (from == to) {
 				continue;
 			} else {
@@ -72,17 +72,21 @@ Tsp::Tsp(istream &s)
 						+ (ycoords[from] - ycoords[to])
 								* (ycoords[from] - ycoords[to]);
 				miles[from * number_of_cities + to] = sqrt(tri);
+				miles[to * number_of_cities + from] = sqrt(tri);
 			}
 		}
 	}
-	/*	printf("domain\n");
-	 printf("cities = %u\n", number_of_cities);
-	 for (unsigned int i = 0; i < number_of_cities; ++i) {
-	 printf("%lf %lf\n", xcoords[i], ycoords[i]);
-	 }
-	 for (unsigned int i = 0; i < number_of_cities * number_of_cities; ++i) {
-	 printf("%lf\n", miles[i]);
-	 }*/
+
+	delete xcoords;
+	delete ycoords;
+//	printf("domain\n");
+//	printf("cities = %u\n", number_of_cities);
+//	for (unsigned int i = 0; i < number_of_cities; ++i) {
+//		printf("%lf %lf\n", xcoords[i], ycoords[i]);
+//	}
+//	for (unsigned int i = 0; i < number_of_cities * number_of_cities; ++i) {
+//		printf("%lf\n", miles[i]);
+//	}
 
 }
 
@@ -155,7 +159,8 @@ vector<State*> *Tsp::expand_usual(TspState *state) {
 					* 10000; // TODO: not sure how this works.
 			unsigned int new_zbr_val = zbr_val ^ state->zbr_table[i];
 			children->push_back(
-					new TspState(this, state, cost, g + cost, &new_visited, new_zbr_val));
+					new TspState(this, state, cost, g + cost, &new_visited,
+							new_zbr_val));
 		}
 	}
 	return children;
@@ -170,7 +175,8 @@ vector<State*> *Tsp::expand_to_goal(TspState *state) {
 	vector<unsigned int> new_visited(visited);
 	new_visited.push_back(0);
 	children->push_back(
-			new TspState(this, state, cost, g + cost, &new_visited, state->get_zbr()));
+			new TspState(this, state, cost, g + cost, &new_visited,
+					state->get_zbr()));
 	return children;
 }
 /**
@@ -326,7 +332,6 @@ fp_type Tsp::MinimumSpanningTree::mst(vector<bool> *not_visited) const {
 
 /****************************************************************************/
 
-
 Tsp::RoundTripDistance::RoundTripDistance(const SearchDomain *d) :
 		Heuristic(d) {
 
@@ -367,7 +372,6 @@ fp_type Tsp::RoundTripDistance::compute(State *s) const {
 /****************************************************************************/
 /****************************************************************************/
 
-
 Tsp::Blind::Blind(const SearchDomain *d) :
 		Heuristic(d) {
 }
@@ -376,13 +380,11 @@ fp_type Tsp::Blind::compute(State *s) const {
 	return 0;
 }
 
-
 /****************************************************************************/
 /****************************************************************************/
 /****************************************************************************/
 
 //#define MOD 16
-
 /**
  * Create a new row modulos projection function.
  * \param d The search domain (a GridWorld)
@@ -472,11 +474,11 @@ vector<unsigned int> Tsp::RowModProject::get_successors(unsigned int b) const {
 			s.push_back(i);
 		}
 //	} else if (b < MOD) { // visited[0]
-	} else if (b < mod_val){
+	} else if (b < mod_val) {
 		for (unsigned int i = 1; i <= number_of_cities; ++i) {
 			s.push_back(b + i * mod_val);
 		}
-	} else if (b < mod_val * mod_val){
+	} else if (b < mod_val * mod_val) {
 		for (unsigned int i = 1; i <= number_of_cities; ++i) {
 			s.push_back(b + i * mod_val * mod_val);
 		}

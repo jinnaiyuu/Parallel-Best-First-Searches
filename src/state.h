@@ -180,7 +180,7 @@ public:
 	int f_pq_index;
 	int f_prime_pq_index;
 
-	virtual unsigned int zbrhash(void) = 0;
+	virtual unsigned int dist_hash(void) = 0;
 };
 
 #endif	/* !_STATE_H_ */

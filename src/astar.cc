@@ -33,8 +33,6 @@ vector<State *> *AStar::search(Timer *t, State *init)
 	open.add(init);
 
 	while (!open.empty() && !path) {
-//		printf("astar::search loop\n");
-
 		State *s = open.take();
 
 		if (s->is_goal()) {

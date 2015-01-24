@@ -39,6 +39,13 @@ public:
 		bool async_recv,
 		unsigned int max_exp,
 		unsigned int openlistsize_);
+	PRAStarVector(unsigned int n_threads,
+		bool use_abst,
+		bool async_send,
+		bool async_recv,
+		unsigned int max_exp,
+		unsigned int openlistsize_,
+		unsigned int closed_size);
 
         virtual ~PRAStarVector(void);
 
@@ -159,6 +166,7 @@ private:
 	double avg_open_size;
 	unsigned int max_open_size;
 
+	unsigned int closed_list_size;
 	unsigned int openlistsize;
 
 #if defined(COUNT_FS)

@@ -39,7 +39,7 @@ TspState::TspState(Tsp *d, State *parent, fp_type c, fp_type g,
 	} else {
 		this->h = 0;
 	}
-	this->zbr_val = zbrhash();
+	this->zbr_val = dist_hash();
 //	printf("zbr_val = %u", zbr_val);
 }
 
@@ -55,6 +55,16 @@ TspState::TspState(Tsp *d, State *parent, fp_type c, fp_type g,
 		this->h = 0;
 	}
 	this->zbr_val = zbr_val_;
+/*	unsigned int n = this->hash();
+	unsigned int cities = d->get_number_of_cities();
+	for (unsigned int i = 0; i < cities - 1; ++i) {
+		n <<= 1;
+		if (n & (1 << cities - 1))
+			printf("1");
+		else
+			printf("0");
+	}
+	printf("\n");*/
 }
 
 /**
@@ -76,21 +86,16 @@ uint64_t TspState::hash(void) const {
 	const Tsp *d = static_cast<const Tsp *>(domain);
 	uint64_t hash = 0;
 	unsigned int cities = d->get_number_of_cities();
-	if (visited.size() == 0) {
-		return 0;
-	}
+
 	for (unsigned int i = 0; i < visited.size(); ++i) {
-		hash = hash + (1 << (visited[i] - 1)); // each bit is a flag to indicate that the city is visited.
+		hash += (1 << (visited[i] - 1));
 	}
-/*	unsigned int n = hash;
-	for (unsigned int i = 0; i < cities; ++i){
-	    if (n & 1)
-	        printf("1");
-	    else
-	        printf("0");
-	    n >>= 1;
+
+	// The city currently on is different from other perspectives.
+	if (visited.size() > 0) {
+		hash += (visited.back() << cities);
 	}
-	printf("\n");*/
+//	printf("hash = %d\n", hash);
 	return hash;
 }
 
@@ -139,7 +144,7 @@ void TspState::init_zbrhash(void) {
 	}
 }
 
-unsigned int TspState::zbrhash(void) {
+unsigned int TspState::dist_hash(void) {
 	return zbr_val;
 	/*	vector<unsigned int> visited = get_visited();
 	 unsigned int zbr = 0;

@@ -35,10 +35,12 @@ int main(int argc, char *argv[])
 	vector<State *> *path;
 	Search *search = get_search(argc, argv);
 
+	printf("got search\n");
 	if (strcmp(argv[1], "arastar") == 0) {	// hack to peal off extra ARA* argument
 		argv++;
 		argc--;
 	}
+
 	string cost = argc == 2 ? "unit" : argv[2];
 	Tiles g(cin, cost);
 	Timer timer;
@@ -62,7 +64,12 @@ int main(int argc, char *argv[])
 
 //	DivMergeProject project(4, &__project);
 	g.set_projection(project);
+	printf("projection\n");
 
+	/*
+	 * Defining Heuristics
+	 *
+	 */
 //	HZero hzero(&g);
 //	g.set_heuristic(&hzero);
 	Tiles::ManhattanDist manhattan(&g);
@@ -77,7 +84,23 @@ int main(int argc, char *argv[])
 		manhattan.set_weight(weight);
 		g.set_heuristic(&manhattan);
 	}
+	printf("heursitic\n");
 
+	/*
+	 * Defining Hash Methods
+	 * closed    := perfect hash / n_threads, perfect hash
+	 * dist hash := zobrish hash, perfect hash
+	 *
+	 */
+	unsigned int closed_hash = 0;
+	unsigned int n_threads = 1; // Let's just type the number of threads rather than doing cool stuff.
+	unsigned int dist_hash = 0;
+	if (argc >= 5 && sscanf(argv[4], "hash-%u-%u-%u", &closed_hash, &n_threads, & dist_hash) == 3) {
+	}
+	printf("hash = %u, %u, %u\n", closed_hash, n_threads, dist_hash);
+	g.set_closed_hash(closed_hash);
+	g.set_n_threads(n_threads);
+	g.set_dist_hash(dist_hash);
 
 
 #if defined(NDEBUG)

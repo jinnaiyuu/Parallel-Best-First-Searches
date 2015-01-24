@@ -38,7 +38,8 @@ F_hist PRAStar::fs;
 
 PRAStar::PRAStarThread::PRAStarThread(PRAStar *p,
 		vector<PRAStarThread *> *threads, CompletionCounter* cc) :
-		p(p), threads(threads), cc(cc), q_empty(true), total_expansion(0), duplicate(0) {
+		p(p), threads(threads), cc(cc), q_empty(true),
+		total_expansion(0), duplicate(0){
 	expansions = 0;
 	time_spinning = 0;
 	out_qs.resize(threads->size(), NULL);
@@ -198,7 +199,7 @@ void PRAStar::PRAStarThread::send_state(State *c) {
 	unsigned long hash =
 			p->use_abstraction ? p->project->project(c)
 //					 : c->hash();
-					: c->zbrhash();
+					: c->dist_hash();
 	unsigned int dest_tid = threads->at(hash % p->n_threads)->get_id();
 	bool self_add = dest_tid == this->get_id();
 
