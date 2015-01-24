@@ -33,7 +33,7 @@ using namespace std;
 class PRAStarMultiheap: public Search {
 public:
 	PRAStarMultiheap(unsigned int n_threads, bool use_abst, bool async_send,
-			bool async_recv, unsigned int max_exp, unsigned int heap_per_threads);
+			bool async_recv, unsigned int max_exp, unsigned int n_heaps);
 
 	virtual ~PRAStarMultiheap(void);
 
@@ -129,6 +129,10 @@ private:
 	bool done;
 	pthread_cond_t cond;
 	const unsigned int n_threads;
+
+	// Heaps PER a thread
+	const unsigned int n_heaps;
+
 	AtomicInt bound;
 	const Projection *project;
 	vector<PRAStarMultiheapThread *> threads;
@@ -153,8 +157,6 @@ private:
 	double max_spinning;
 	double avg_open_size;
 	unsigned int max_open_size;
-
-	unsigned heap_per_thread;
 
 #if defined(COUNT_FS)
 	static F_hist fs;

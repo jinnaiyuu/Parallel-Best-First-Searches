@@ -91,8 +91,10 @@ int main(int argc, char *argv[])
 	 * closed    := perfect hash / n_threads, perfect hash
 	 * dist hash := zobrish hash, perfect hash
 	 *
+	 * Default is normal HDA* with perfect hash for closed list and Zobrist hash for distribution.
+	 *
 	 */
-	unsigned int closed_hash = 0;
+	unsigned int closed_hash = 1;
 	unsigned int n_threads = 1; // Let's just type the number of threads rather than doing cool stuff.
 	unsigned int dist_hash = 0;
 	if (argc >= 5 && sscanf(argv[4], "hash-%u-%u-%u", &closed_hash, &n_threads, & dist_hash) == 3) {

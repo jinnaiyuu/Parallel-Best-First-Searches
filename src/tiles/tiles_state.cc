@@ -32,8 +32,8 @@ void TilesState::compute_closed_hash(void) {
 		hash_val = perfect_hash(t->get_n_threads());
 		break;
 	default:
-//		printf("error closed\n");
-		assert(false);
+//		printf("perfect closed\n");
+//		assert(true);
 		hash_val = perfect_hash(1);
 		break;
 	}

@@ -285,11 +285,13 @@ template<class Elem, class PQOps>
 template<class Elem, class PQOps>
 	Elem PriorityQueue<Elem, PQOps>::take(void)
 {
+//	printf("PriorityQueue::take\n");
 	Elem e;
 
-	if (fill <= 0)
+	if (fill <= 0) {
+//		printf("PriorityQueue::take NULL\n");
 		return NULL;
-
+	}
 	e = heap[0];
 	set_index(e, -1);
 
@@ -303,6 +305,7 @@ template<class Elem, class PQOps>
 	assert(indexes_match());
 	assert(heap_holds(0, fill - 1));
 #endif
+//	printf("PriorityQueue::take return\n");
 
 	return e;
 }

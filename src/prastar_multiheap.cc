@@ -24,10 +24,11 @@ extern "C" {
 #include "util/mutex.h"
 #include "util/msg_buffer.h"
 #include "util/sync_solution_stream.h"
-#include "prastar_multiheap.h".h"
+#include "prastar_multiheap.h"
 #include "projection.h"
 #include "search.h"
 #include "state.h"
+#include "pq_multiheap_open_list.h"
 
 using namespace std;
 
@@ -38,7 +39,7 @@ F_hist PRAStarMultiheap::fs;
 
 PRAStarMultiheap::PRAStarMultiheapThread::PRAStarMultiheapThread(PRAStarMultiheap *p,
 		vector<PRAStarMultiheapThread *> *threads, CompletionCounter* cc) :
-		p(p), threads(threads), cc(cc), q_empty(true), total_expansion(0) {
+		p(p), threads(threads), cc(cc), open(p->n_threads, p->n_heaps), q_empty(true), total_expansion(0) {
 	expansions = 0;
 	time_spinning = 0;
 	out_qs.resize(threads->size(), NULL);
@@ -51,7 +52,7 @@ PRAStarMultiheap::PRAStarMultiheapThread::~PRAStarMultiheapThread(void) {
 	for (i = out_qs.begin(); i != out_qs.end(); i++)
 		if (*i)
 			delete *i;
-	printf("expd = %u\n", total_expansion);
+//	printf("expd = %u\n", total_expansion);
 }
 
 
@@ -195,13 +196,13 @@ void PRAStarMultiheap::PRAStarMultiheapThread::send_state(State *c) {
 	unsigned long hash =
 			p->use_abstraction ? p->project->project(c)
 //					 : c->hash();
-					: c->zbrhash();
+					: c->dist_hash();
 
 	// TODO: I think this would work fine. Each thread only need to do
 	// hash % p->heap_per_thread
 	// to find the right heap.
 	unsigned int dest_tid =
-			threads->at(hash % (p->n_threads * p->heap_per_thread) / p->heap_per_thread)->get_id();
+			threads->at(hash % p->n_threads)->get_id(); // TODO: check
 	bool self_add = dest_tid == this->get_id();
 
 	assert(p->n_threads != 1 || self_add);
@@ -304,15 +305,16 @@ void PRAStarMultiheap::PRAStarMultiheapThread::run(void) {
 
 
 PRAStarMultiheap::PRAStarMultiheap(unsigned int n_threads, bool use_abst, bool a_send,
-		bool a_recv, unsigned int max_e, unsigned int heap_per_thread) :
-		n_threads(n_threads), bound(fp_infinity), project(NULL), use_abstraction(
+		bool a_recv, unsigned int max_e, unsigned int n_heaps) :
+		n_threads(n_threads), n_heaps(n_heaps), bound(fp_infinity), project(NULL), use_abstraction(
 				use_abst), async_send(a_send), async_recv(a_recv), max_exp(
-				max_e), heap_per_thread(heap_per_thread) {
+				max_e){
 	if (max_e != 0 && !async_send) {
 		cerr << "Max expansions must be zero for synchronous sends" << endl;
 		abort();
 	}
 	done = false;
+//	printf("PRAStarMultiheap\n");
 }
 
 
@@ -365,7 +367,7 @@ vector<State *> *PRAStarMultiheap::search(Timer *timer, State *init) {
 	if (use_abstraction)
 		threads.at(project->project(init) % n_threads)->open.add(init);
 	else
-		threads.at(init->hash() % n_threads)->open.add(init);
+		threads.at(init->dist_hash() % n_threads)->open.add(init);
 
 	for (iter = threads.begin(); iter != threads.end(); iter++) {
 		(*iter)->start();

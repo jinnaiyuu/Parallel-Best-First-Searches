@@ -89,6 +89,7 @@ SRC= \
 	astar_vector.cc \
 	pastar_vector.cc \
 	prastar_vector.cc \
+	prastar_multiheap.cc \
 	wprastar.cc
 
 OBJ=$(addprefix $(OBJDIR)/, $(SRC:.cc=.o))

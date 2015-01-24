@@ -49,6 +49,8 @@
 #include "pastar_vector.h"
 #include "prastar_vector.h"
 
+#include "prastar_multiheap.h"
+
 #include <limits.h>
 #include <string.h>
 #include <ctype.h>
@@ -121,6 +123,7 @@ Search *get_search(int argc, char *argv[])
 	unsigned int openlistsize = 0;
 	unsigned int closedlistsize = 0;
 
+	unsigned int n_heaps = 0;
 
 	if (argc > 1 && strcmp(argv[1], "astar") == 0) {
 		return new AStar();
@@ -171,6 +174,9 @@ Search *get_search(int argc, char *argv[])
 	} else if (argc > 1 && sscanf(argv[1], "hdastar-%u-%u", &max_e, &threads) == 2) {
 		return new PRAStar(threads, false, true, true, max_e);
 
+	// HDA* with Multi heap or Divided heap
+	} else if (argc > 1 && sscanf(argv[1], "hdastar-multiheap-%u-%u-%u", &max_e, &threads, &n_heaps) == 3) {
+		return new PRAStarMultiheap(threads, false, true, true, max_e, n_heaps);
 
 	// HDA* in vector
 //	} else if (argc > 1 && sscanf(argv[1], "hdastar-vector-%u-%u", &max_e, &threads) == 2) {
