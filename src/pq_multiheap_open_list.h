@@ -45,6 +45,7 @@ template<class PQCompare>
 class PQMultiheapOpenList: public OpenList {
 public:
 	PQMultiheapOpenList(unsigned int n_threads, unsigned int n_heaps);
+//	PQMultiheapOpenList(unsigned int n_threads, unsigned int n_heaps, unsigned int closedlistsize);
 	~PQMultiheapOpenList(void);
 	void add(State *s);
 	State *take(void);
@@ -71,6 +72,7 @@ private:
 	fp_type get_priority(State* s);
 	unsigned int n_threads;
 	unsigned int n_heaps;
+	unsigned int closedlistsize;
 	vector<PriorityQueue<State *, PQCompare>*> pq;
 	fp_type best_priority;
 	unsigned int best_heap;
@@ -110,7 +112,6 @@ PQMultiheapOpenList<PQCompare>::PQMultiheapOpenList(unsigned int n_threads,
 	for (unsigned int i = 0; i < n_heaps; ++i) {
 		distribution[i] = 0;
 	}
-//	printf("pq[0]->fill = %u\n", pq[0]->get_fill());
 }
 
 template<class PQCompare>
@@ -135,38 +136,41 @@ void PQMultiheapOpenList<PQCompare>::add(State *s) {
 	stop_queue_timer();
 
 	pq[which_heap]->add(s);
+	if (fronts[which_heap] > get_priority(s)) {
+		fronts[which_heap] = get_priority(s);
+	}
 	change_size(1);
 
 //	printf("f,h = %lu, %lu\n", s->get_h(), s->get_f());
-	/*	printf("f+h = %lu\n", get_priority(s));
-	 printf("best priority = %lu\n", best_priority);
-	 printf("best = %lu\n", get_best_val());
-	 printf("best heap = %u\n", best_heap);*/
+/*
+	printf("f+h = %lu\n", get_priority(s));
+	printf("best priority = %lu\n", best_priority);
+	printf("best = %lu\n", get_best_val());
+	printf("best heap = %u\n", best_heap);
+*/
 
-
-/*	if (get_priority(s) < best_priority) {
-		best_priority = get_priority(s);
-		set_best_val(comp.get_value(s));
-		best_heap = which_heap;
-	}*/
+	/*	if (get_priority(s) < best_priority) {
+	 best_priority = get_priority(s);
+	 set_best_val(comp.get_value(s));
+	 best_heap = which_heap;
+	 }*/
 
 	// TODO: Why this don't work?
-/*	fp_type best = fp_infinity;
-	unsigned int recal_best_heap = -1;
-	for (unsigned int i = 0; i < n_heaps; ++i) {
-		if (!pq[i]->empty() && best > get_priority(pq[i]->front())) {
-			best = get_priority(pq[i]->front());
-			recal_best_heap = i;
-			set_best_val(comp.get_value(pq[i]->front()));
-		}
-	}
-	best_priority = best;
-	best_heap = recal_best_heap;*/
-
+	/*	fp_type best = fp_infinity;
+	 unsigned int recal_best_heap = -1;
+	 for (unsigned int i = 0; i < n_heaps; ++i) {
+	 if (!pq[i]->empty() && best > get_priority(pq[i]->front())) {
+	 best = get_priority(pq[i]->front());
+	 recal_best_heap = i;
+	 set_best_val(comp.get_value(pq[i]->front()));
+	 }
+	 }
+	 best_priority = best;
+	 best_heap = recal_best_heap;*/
 
 	/*	if (best_heap != recal_best_heap) {
-		printf("best_heap, actual_best = %u, %u\n", best_heap, recal_best_heap);
-	}*/
+	 printf("best_heap, actual_best = %u, %u\n", best_heap, recal_best_heap);
+	 }*/
 	/*
 	 fp_type best = fp_infinity;
 	 for (unsigned int i = 0; i < n_heaps; ++i) {
@@ -194,7 +198,6 @@ void PQMultiheapOpenList<PQCompare>::add(State *s) {
 template<class PQCompare>
 State *PQMultiheapOpenList<PQCompare>::take(void) {
 //	printf("PQMultiheap::take\n");
-//	printf("best_heap = %u\n", best_heap);
 	State *s;
 //	printf("pq size = %u\n", pq[best_heap]->get_fill());
 	start_queue_timer();
@@ -203,15 +206,18 @@ State *PQMultiheapOpenList<PQCompare>::take(void) {
 	fp_type best = fp_infinity;
 //	unsigned int recal_best_heap = -1;
 	for (unsigned int i = 0; i < n_heaps; ++i) {
-		if (!pq[i]->empty() && best > get_priority(pq[i]->front())) {
-			best = get_priority(pq[i]->front());
+		if (fronts[i] < best) {
 			best_heap = i;
+			best = fronts[i];
 		}
-	}-
-/*	if (best_heap != recal_best_heap) {
-		printf("best_heap, actual_best = %u, %u\n", best_heap, recal_best_heap);
-	}*/
+	}
+//	printf("best_heap = %u\n", best_heap);
 	s = pq[best_heap]->take(); // TODO: check
+	if (pq[best_heap]->empty()) {
+		fronts[best_heap] = fp_infinity;
+	} else {
+		fronts[best_heap] = get_priority(pq[best_heap]->front());
+	}
 //	}
 	if (!s) {
 //		printf("s is NULL\n");

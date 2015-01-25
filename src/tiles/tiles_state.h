@@ -37,7 +37,7 @@ public:
 	const vector<unsigned int> *get_tiles(void) const;
 	unsigned int get_blank(void) const;
 	void init_zbrhash(void);
-
+	void init_zbrhash_block(void);
 	unsigned int dist_hash(void); // compute hash for distribution
 
 private:

@@ -39,7 +39,8 @@ F_hist PRAStarMultiheap::fs;
 
 PRAStarMultiheap::PRAStarMultiheapThread::PRAStarMultiheapThread(PRAStarMultiheap *p,
 		vector<PRAStarMultiheapThread *> *threads, CompletionCounter* cc) :
-		p(p), threads(threads), cc(cc), open(p->n_threads, p->n_heaps), q_empty(true), total_expansion(0) {
+		p(p), threads(threads), cc(cc), open(p->n_threads, p->n_heaps),
+		closed(p->closedlistsize), q_empty(true), total_expansion(0) {
 	expansions = 0;
 	time_spinning = 0;
 	out_qs.resize(threads->size(), NULL);
@@ -305,10 +306,10 @@ void PRAStarMultiheap::PRAStarMultiheapThread::run(void) {
 
 
 PRAStarMultiheap::PRAStarMultiheap(unsigned int n_threads, bool use_abst, bool a_send,
-		bool a_recv, unsigned int max_e, unsigned int n_heaps) :
+		bool a_recv, unsigned int max_e, unsigned int n_heaps, unsigned int closedlistsize) :
 		n_threads(n_threads), n_heaps(n_heaps), bound(fp_infinity), project(NULL), use_abstraction(
 				use_abst), async_send(a_send), async_recv(a_recv), max_exp(
-				max_e){
+				max_e), closedlistsize(closedlistsize){
 	if (max_e != 0 && !async_send) {
 		cerr << "Max expansions must be zero for synchronous sends" << endl;
 		abort();

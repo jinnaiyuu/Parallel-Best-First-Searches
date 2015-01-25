@@ -147,7 +147,7 @@ unsigned int TilesState::get_blank(void) const {
 }
 
 void TilesState::init_zbrhash() {
-	size = tiles.size();
+/*	size = tiles.size();
 	for (unsigned int num = 0; num < size; ++num) {
 		for (unsigned int pos = 0; pos < size; ++pos) {
 			if (num == 0) {
@@ -156,7 +156,9 @@ void TilesState::init_zbrhash() {
 				zbr_table[num][pos] = rand(); // 0 to 255
 			}
 		}
-	}
+	}*/
+	init_zbrhash_block();
+	printf("block zbrhash\n");
 	/*
  	for (int num = 0; num < 16; ++num) {
 		for (int pos = 0; pos < 16; ++pos) {
@@ -164,6 +166,20 @@ void TilesState::init_zbrhash() {
 		}
 	}
 	*/
+}
+
+void TilesState::init_zbrhash_block() {
+	size = tiles.size();
+	int js[4] = { 0, 2, 8, 10 };
+	for (int i = 1; i < size; ++i) {
+		for (int j = 0; j < 4; ++j) {
+			int r = random();
+			zbr_table[i][js[j]] = r; // zbr[number][place]
+			zbr_table[i][js[j] + 1] = r;
+			zbr_table[i][js[j] + 4] = r;
+			zbr_table[i][js[j] + 4 + 1] = r;
+		}
+	}
 }
 
 unsigned int TilesState::dist_hash(void) {

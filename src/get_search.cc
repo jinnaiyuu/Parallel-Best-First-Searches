@@ -175,8 +175,11 @@ Search *get_search(int argc, char *argv[])
 		return new PRAStar(threads, false, true, true, max_e);
 
 	// HDA* with Multi heap or Divided heap
+	} else if (argc > 1 && sscanf(argv[1], "hdastar-multiheap-%u-%u-%u-%u",
+			&max_e, &threads, &n_heaps, &closedlistsize) == 4) {
+			return new PRAStarMultiheap(threads, false, true, true, max_e, n_heaps, closedlistsize);
 	} else if (argc > 1 && sscanf(argv[1], "hdastar-multiheap-%u-%u-%u", &max_e, &threads, &n_heaps) == 3) {
-		return new PRAStarMultiheap(threads, false, true, true, max_e, n_heaps);
+		return new PRAStarMultiheap(threads, false, true, true, max_e, n_heaps, 1000000);
 
 	// HDA* in vector
 //	} else if (argc > 1 && sscanf(argv[1], "hdastar-vector-%u-%u", &max_e, &threads) == 2) {
@@ -184,6 +187,11 @@ Search *get_search(int argc, char *argv[])
 	} else if (argc > 1 && sscanf(argv[1], "hdastar-vector-%u-%u-%u-%u", &max_e, &threads, &openlistsize, &closedlistsize) == 4) {
 		// This is for grid path-finding. Actually we only need this thing.
 		return new PRAStarVector(threads, false, true, true, max_e, openlistsize, closedlistsize);
+
+	} else if (argc > 1 && sscanf(argv[1], "ahdastar-vector-%u-%u-%u-%u-%u",
+			&max_e, &threads, &openlistsize, &closedlistsize, &nblocks) == 5) {
+		// This is for grid path-finding. Actually we only need this thing.
+		return new PRAStarVector(threads, true, true, true, max_e, openlistsize, closedlistsize);
 
 	} else if (argc > 1 && sscanf(argv[1], "hdastar-vector-%u-%u-%u", &max_e, &threads, &openlistsize) == 3) {
 		// This is for grid path-finding. Actually we only need this thing.
