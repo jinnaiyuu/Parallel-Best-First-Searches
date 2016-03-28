@@ -34,6 +34,7 @@ public:
 	Tsp(istream &s); // pairs of (x, y). Each is a coordination of the city.
 
 	State *initial_state(void); // all not visited, visiting = 0 (home town).
+	void init_zbrhash(unsigned int abstraction, bool is_structure = false);
 
 	// Go to all cities other than visited ones and home.
 	// If all cities other than home already visited, then go home town.
@@ -49,17 +50,20 @@ public:
 #endif	/* ENABLE_IMAGES */
 
 	/*
-	 * The Manhattan Distance heuristic.
+	 * The Minimum Spanning Tree heuristic and 1-tree heuristic combined.
 	 */
 	class MinimumSpanningTree : public Heuristic {
 	public:
-		MinimumSpanningTree(const SearchDomain *d);
+		MinimumSpanningTree(const SearchDomain *d, unsigned int onetree);
 		fp_type compute(State *s) const;
 	private:
+		unsigned int one;
 		// min(miles(visiting, i))
 //		fp_type visiting_to_mst(vector<bool> *not_visited, unsigned int current) const;
 		// mst in cities not visited or visiting.
 		fp_type mst(vector<bool> *not_visited) const;
+		fp_type onetree(vector<bool> *not_visited) const;
+
 	};
 
 	class RoundTripDistance : public Heuristic {

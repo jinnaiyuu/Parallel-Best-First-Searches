@@ -52,10 +52,10 @@ gnuplot<<EOF
    set logscale x
 #   set key out vert
    set key left
-   plot "${data1}.correctrate" u 2:1 w steps title "${data1}"
-   replot "${data2}.correctrate" u 2:1 w steps title "${data2}"
+   plot "${data1}.correctrate" u 2:1 w steps title "HDA*"
+   replot "${data2}.correctrate" u 2:1 w steps title "Multiheap HDA* (2 heaps)"
    set output "${data1}_walltime.pdf"
-   replot "${data3}.correctrate" u 2:1 w steps title "${data3}"
+   replot "${data3}.correctrate" u 2:1 w steps title "Multiheap HDA* (4 heaps)"
 #   replot "${data4}.correctrate" u 2:1 w steps title "${data4}"
 #   replot "${data5}.correctrate" u 2:1 w steps title "${data5}"
 #   replot "${data6}.correctrate" u 2:1 w steps title "$data6"

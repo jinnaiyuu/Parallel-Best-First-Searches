@@ -9,8 +9,8 @@
  * \date 2008-11-19
  */
 
-#if !defined(_PRASTAR_VECTOR_H_)
-#define _PRASTAR_VECTOR_H_
+#if !defined(_PHDASTAR_H_)
+#define _PHDASTAR_H_
 
 #include <vector>
 
@@ -22,54 +22,51 @@
 #include "util/msg_buffer.h"
 #include "util/atomic_int.h"
 #include "util/thread.h"
-#include "synch_pq_olist.h"
-#include "synch_closed_list.h"
-#include "util/completion_counter.h"
 
-#include "pq_vector_open_list.h"
+//#include "synch_pq_olist.h"
+//#include "synch_closed_list.h"
+
+//#include "partitioned_pq_open_list.h"
+#include "partitioned_closed_list.h"
+
+#include "util/completion_counter.h"
 
 using namespace std;
 
-
-class PRAStarVector : public Search {
+class PartitionedClosedHDAStar: public Search {
 public:
-	PRAStarVector(unsigned int n_threads,
-		bool use_abst,
-		bool async_send,
-		bool async_recv,
-		unsigned int max_exp,
-		unsigned int openlistsize_);
-	PRAStarVector(unsigned int n_threads,
-		bool use_abst,
-		bool async_send,
-		bool async_recv,
-		unsigned int max_exp,
-		unsigned int openlistsize_,
-		unsigned int closed_size);
 
-        virtual ~PRAStarVector(void);
+	// 1. open list division
+	// 2. closed list size (default = 1,000,000)
+	// 3. closed list division ()
+	PartitionedClosedHDAStar(unsigned int n_threads, bool use_abst, bool async_send,
+			bool async_recv, unsigned int max_exp,
+			unsigned int open_list_division,
+			unsigned int closed_list_size,
+			unsigned int closed_list_division);
 
-        virtual vector<State *> *search(Timer *t, State *init);
-        void set_done();
-        bool is_done();
-        void set_path(vector<State *> *path);
-        bool has_path();
+	virtual ~PartitionedClosedHDAStar(void);
+
+	virtual vector<State *> *search(Timer *t, State *init);
+	void set_done();
+	bool is_done();
+	void set_path(vector<State *> *path);
+	bool has_path();
 
 	virtual void output_stats(void);
 
 private:
-        class PRAStarVectorThread : public Thread {
-        public:
-        	PRAStarVectorThread(PRAStarVector *p,
-			      vector<PRAStarVectorThread *> *threads,
-			      CompletionCounter* cc);
-                virtual ~PRAStarVectorThread(void);
-                virtual void run(void);
+	class PartitionedClosedHDAStarThread: public Thread {
+	public:
+		PartitionedClosedHDAStarThread(PartitionedClosedHDAStar *p, vector<PartitionedClosedHDAStarThread *> *threads,
+				CompletionCounter* cc);
+		virtual ~PartitionedClosedHDAStarThread(void);
+		virtual void run(void);
 
 		/**
 		 * Gets a pointer to the message queue.
 		 */
-	        vector<State*> *get_queue(void);
+		vector<State*> *get_queue(void);
 
 		/**
 		 * Gets the lock on the message queue.
@@ -82,14 +79,13 @@ private:
 		 */
 		static void post_send(void *thr);
 
-                State *take(void);
+		State *take(void);
 
-        private:
+	private:
 		/* Flushes the send queues. */
 		bool flush_sends(void);
-
 		/* flushes the queue into the open list. */
-                void flush_receives(bool has_sends);
+		void flush_receives(bool has_sends);
 
 		/* sends the state to the appropriate thread (possibly
 		 * this thread). */
@@ -102,21 +98,20 @@ private:
 		/* Perform an synchronous send to another thread (not called
 		 * for self-sends). */
 		void do_sync_send(unsigned int dest_tid, State *c);
-
-                PRAStarVector *p;
+		PartitionedClosedHDAStar *p;
 
 		/* List of the other threads */
-                vector<PRAStarVectorThread *> *threads;
+		vector<PartitionedClosedHDAStarThread *> *threads;
 
 		/* The incoming message queue. */
 		vector<State *> q;
 		Mutex mutex;
 
 		/* The outgoing message queues (allocated lazily). */
-		vector<MsgBuffer<State*>* > out_qs;
+		vector<MsgBuffer<State*>*> out_qs;
 
 		/* Marks whether or not this thread has posted completion */
-                bool completed;
+		bool completed;
 
 		/* expansions between flushes of the send queue. */
 		unsigned int expansions;
@@ -124,31 +119,35 @@ private:
 		/* A pointer to the completion counter. */
 		CompletionCounter *cc;
 
-		friend class PRAStarVector;
+		friend class PartitionedClosedHDAStar;
 
 		/* Search queues */
-		//: This should be replaced by vector open list.
-		PQVectorOpenList open;
-
-		ClosedList closed;
+		// TODO: This should be replaced by vector open list.
+		PQOpenList<State::PQOpsFPrime> open;
+//
+//		ClosedList closed; // TODO: Change the size of closed list.
 		bool q_empty;
 
 		/* statistics */
 		double time_spinning;
-		unsigned int expanded;
-		unsigned int self_push;
-        };
 
-        bool done;
-        pthread_cond_t cond;
-        const unsigned int n_threads;
+		unsigned int total_expansion;
+		unsigned int duplicate;
+	};
+
+//	PartitionedPQOpenList<State::PQOpsFPrime> open;
+
+	PartitionedClosedList closed; // TODO: Change the size of closed list.
+
+	bool done;
+	pthread_cond_t cond;
+	const unsigned int n_threads;
 	AtomicInt bound;
 	const Projection *project;
-	vector<PRAStarVectorThread *> threads;
-	typename vector<PRAStarVectorThread *>::iterator iter;
+	vector<PartitionedClosedHDAStarThread *> threads;
+	typename vector<PartitionedClosedHDAStarThread *>::iterator iter;
 
 	SolutionStream *solutions;
-
 
 	/* true: use abstraction for hashing, false: use basic
 	 * hashing. */
@@ -168,14 +167,9 @@ private:
 	double avg_open_size;
 	unsigned int max_open_size;
 
-	unsigned int closed_list_size;
-	unsigned int openlistsize;
-
-	unsigned int self_pushes;
-
 #if defined(COUNT_FS)
 	static F_hist fs;
 #endif	/* COUNT_FS */
 };
 
-#endif	/* !_PRASTAR_VECTOR_H_ */
+#endif	/* !_PRASTAR_H_ */

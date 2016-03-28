@@ -51,7 +51,7 @@ bool GridState::is_goal(void)
  * Get the hash value of this state.
  * \return A unique hash value for this state.
  */
-uint64_t GridState::hash(void) const
+uint128_t GridState::hash(void) const
 {
 	const GridWorld *d;
 
@@ -112,5 +112,9 @@ int GridState::get_y(void) const
 }
 
 unsigned int GridState::dist_hash(void){
- return get_x()*3 + get_y()*7;
+	const GridWorld *d;
+
+	d = static_cast<const GridWorld *>(domain);
+
+	return x * (d->get_height() + 0) + y;
 }

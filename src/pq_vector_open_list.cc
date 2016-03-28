@@ -11,14 +11,14 @@
 
 //#include <assert.h>
 /*
-#include <list>
-#include <limits>
+ #include <list>
+ #include <limits>
 
-#include "state.h"
-#include "open_list.h"
-#include "util/priority_queue.h"
-#include "util/cpu_timer.h"
-*/
+ #include "state.h"
+ #include "open_list.h"
+ #include "util/priority_queue.h"
+ #include "util/cpu_timer.h"
+ */
 #include "pq_vector_open_list.h"
 
 using namespace std;
@@ -27,15 +27,18 @@ using namespace std;
  * Create a new PQ open list.
  */
 // template<class PQCompare>
-	PQVectorOpenList::PQVectorOpenList(void)
-: fill(0), min(0), pq(120)
-{
+PQVectorOpenList::PQVectorOpenList(void) :
+		fill(0), min(0), pq(120), node_quality(120, 0) {
+	/*		for (unsigned int i = 0; i < node_quality.size(); ++i) {
+	 node_quality[i] = 0;
+	 }*/
 }
 
-void PQVectorOpenList::changeSize(unsigned int size)
-{
+void PQVectorOpenList::changeSize(unsigned int size) {
 	// This instruction would take a bit of time.
+//	printf("resize to %u\n", size);
 	pq.resize(size);
+//	node_quality.resize(size, 0);
 }
 
 /**
@@ -43,13 +46,12 @@ void PQVectorOpenList::changeSize(unsigned int size)
  * \param s The state to add.
  */
 // template<class PQCompare>
-void PQVectorOpenList::add(State *s)
-{
+void PQVectorOpenList::add(State *s) {
 //	printf("PQVectorOpenList::add\n");
 //	printf("f,h = %lu, %lu\n", s->get_f()/10000, s->get_h()/10000);
 // 	Ok, this does work for float point domain. But does not return optimal result. BUG.
-	int p0 = s->get_f()/10000;
-	assert(p0<120 && p0>=0);
+	int p0 = s->get_f() / 10000;
+//	assert(p0<120 && p0>=0);
 
 	if (p0 >= static_cast<int>(pq.size())) {
 //		printf("f going crazy.\n");
@@ -59,7 +61,7 @@ void PQVectorOpenList::add(State *s)
 	if (p0 < min)
 		min = p0;
 
-	pq[p0].push(s, static_cast<int>(s->get_g()/10000));
+	pq[p0].push(s, static_cast<int>(s->get_g() / 10000));
 	fill++;
 }
 
@@ -68,14 +70,14 @@ void PQVectorOpenList::add(State *s)
  * \return The front of the priority queue.
  */
 // template<class PQCompare>
-State *PQVectorOpenList::take(void)
-{
+State *PQVectorOpenList::take(void) {
 //	printf("PQVectorOpenList::take\n");
 
-	for ( ; (unsigned int) min < pq.size() && pq[min].empty() ; min++) {
+	for (; (unsigned int) min < pq.size() && pq[min].empty(); min++) {
 		;
 	}
 	fill--;
+	++node_quality[min];
 	return pq[min].pop();
 }
 
@@ -83,11 +85,12 @@ State *PQVectorOpenList::take(void)
  * Peek at the top element.
  */
 // template<class PQCompare>
- State * PQVectorOpenList::peek(void)
-{
-	 // TODO: this function would not work well.
+State * PQVectorOpenList::peek(void) {
 //	printf("PQVectorOpenList::peek\n");
-	return pq[min].pop();
+	for (; (unsigned int) min < pq.size() && pq[min].empty(); min++) {
+		;
+	}
+	return pq[min].peek();
 }
 
 /**
@@ -95,18 +98,16 @@ State *PQVectorOpenList::take(void)
  * \return True if the open list is empty, false if not.
  */
 // template<class PQCompare>
- bool PQVectorOpenList::empty(void)
-{
-	return (fill==0);
+bool PQVectorOpenList::empty(void) {
+	return (fill == 0);
 }
 
 /**
  * Delete all of the states on the open list.
  */
 // template<class PQCompare>
- void PQVectorOpenList::delete_all_states(void)
-{
-		printf("PQVectorOpenList::delete_all_states\n");
+void PQVectorOpenList::delete_all_states(void) {
+	printf("PQVectorOpenList::delete_all_states\n");
 	// TODO: Need to implement in term of vector<vector<state*>>
 //	while (!pq.empty())
 //		delete pq.take();
@@ -119,22 +120,20 @@ State *PQVectorOpenList::take(void)
  * Prune all of the states.
  */
 // template<class PQCompare>
- void PQVectorOpenList::prune(void)
-{
-		printf("PQVectorOpenList::prune\n");
+void PQVectorOpenList::prune(void) {
+	printf("PQVectorOpenList::prune\n");
 	// TODO: not sure what this function is for.
-/*
-	for (int i = 0; i < fill; i += 1)
-		pq.get_elem(i)->set_open(false);
+	/*
+	 for (int i = 0; i < fill; i += 1)
+	 pq.get_elem(i)->set_open(false);
 
-	pq.reset();
-	set_size(0);
-	*/
+	 pq.reset();
+	 set_size(0);
+	 */
 }
 
 // template<class PQCompare>
- unsigned int PQVectorOpenList::size(void)
-{
+unsigned int PQVectorOpenList::size(void) {
 	return fill;
 }
 
@@ -143,74 +142,78 @@ State *PQVectorOpenList::take(void)
  * updating states which are open.
  */
 // template<class PQCompare>
-	void PQVectorOpenList::see_update(State *s)
-{
+void PQVectorOpenList::see_update(State *s) {
 //		printf("PQVectorOpenList::see_update\n");
-/*
-	start_queue_timer();
-	pq.see_update(get_index(s));
-	stop_queue_timer();
+	/*
+	 start_queue_timer();
+	 pq.see_update(get_index(s));
+	 stop_queue_timer();
 
-	set_best_val(comp.get_value(pq.front()));
-*/
+	 set_best_val(comp.get_value(pq.front()));
+	 */
 }
 
 /**
  * Remove the given state from the PQ.
  */
 // template<class PQCompare>
-	void PQVectorOpenList::remove(State *s)
-{
+void PQVectorOpenList::remove(State *s) {
 	printf("PQVectorOpenList::remove\n");
 	// TODO: Why would you need this function?
 	/*
-	start_queue_timer();
-	pq.remove(get_index(s));
-	stop_queue_timer();
+	 start_queue_timer();
+	 pq.remove(get_index(s));
+	 stop_queue_timer();
 
-	s->set_open(false);
-	change_size(-1);
-	if (pq.empty())
-		set_best_val(fp_infinity);
-	else
-		set_best_val(comp.get_value(pq.front()));
-		*/
+	 s->set_open(false);
+	 change_size(-1);
+	 if (pq.empty())
+	 set_best_val(fp_infinity);
+	 else
+	 set_best_val(comp.get_value(pq.front()));
+	 */
 }
 
 /**
  * Resort the whole thing.
  */
 // template<class PQCompare>
-void PQVectorOpenList::resort(void)
-{
+void PQVectorOpenList::resort(void) {
 	printf("PQVectorOpenList::resort\n");
 	// TODO: What is this function for?
 	/*
-	start_queue_timer();
-	pq.resort();
-	stop_queue_timer();
+	 start_queue_timer();
+	 pq.resort();
+	 stop_queue_timer();
 
-	if (pq.empty())
-		set_best_val(fp_infinity);
-	else
-		set_best_val(comp.get_value(pq.front()));
+	 if (pq.empty())
+	 set_best_val(fp_infinity);
+	 else
+	 set_best_val(comp.get_value(pq.front()));
 	 */
 }
 
 // template<class PQCompare>
-void PQVectorOpenList::verify(void)
-{
+void PQVectorOpenList::verify(void) {
 	printf("PQVectorOpenList::verify\n");
 	/*
-	assert(pq.heap_holds(0, pq.get_fill() - 1));
-	assert(pq.indexes_match());
-	*/
+	 assert(pq.heap_holds(0, pq.get_fill() - 1));
+	 assert(pq.indexes_match());
+	 */
 }
 
 // template<class PQCompare>
-list<State*> *PQVectorOpenList::states(void)
-{
+list<State*> *PQVectorOpenList::states(void) {
 	printf("PQVectorOpenList::states\n");
 	return NULL;
 //	return pq.to_list();
+}
+
+void PQVectorOpenList::print_quality(void) {
+	printf("quality ");
+	for (unsigned int i = 0; i < node_quality.size(); ++i) {
+		printf("%u ", node_quality[i]);
+	}
+	printf("\n");
+
 }

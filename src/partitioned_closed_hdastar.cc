@@ -24,7 +24,7 @@ extern "C" {
 #include "util/mutex.h"
 #include "util/msg_buffer.h"
 #include "util/sync_solution_stream.h"
-#include "prastar_vector.h"
+#include "partitioned_closed_hdastar.h"
 #include "projection.h"
 #include "search.h"
 #include "state.h"
@@ -32,39 +32,43 @@ extern "C" {
 using namespace std;
 
 #if defined(COUNT_FS)
-F_hist PRAStar::fs;
+F_hist PartitionedClosedHDAStar::fs;
 #endif // COUNT_FS
-PRAStarVector::PRAStarVectorThread::PRAStarVectorThread(PRAStarVector *p,
-		vector<PRAStarVectorThread *> *threads, CompletionCounter* cc) :
-		p(p), threads(threads), cc(cc), closed(p->closed_list_size), q_empty(
-				true), expanded(0), self_push(0) {
+
+
+PartitionedClosedHDAStar::PartitionedClosedHDAStarThread::PartitionedClosedHDAStarThread(PartitionedClosedHDAStar *p,
+		vector<PartitionedClosedHDAStarThread *> *threads, CompletionCounter* cc) :
+		p(p), threads(threads), cc(cc), q_empty(true),
+		total_expansion(0), duplicate(0){
 	expansions = 0;
 	time_spinning = 0;
 	out_qs.resize(threads->size(), NULL);
 	completed = false;
-	open.changeSize(p->openlistsize);
-//	printf("resized to %u\n", p->openlistsize);
 }
 
-PRAStarVector::PRAStarVectorThread::~PRAStarVectorThread(void) {
-	p->self_pushes += self_push;
+
+PartitionedClosedHDAStar::PartitionedClosedHDAStarThread::~PartitionedClosedHDAStarThread(void) {
 	vector<MsgBuffer<State*> *>::iterator i;
 	for (i = out_qs.begin(); i != out_qs.end(); i++)
 		if (*i)
 			delete *i;
-	open.print_quality();
+	printf("expd = %u\n", total_expansion);
+	printf("duplicate = %u\n", duplicate);
 }
 
-vector<State*> *PRAStarVector::PRAStarVectorThread::get_queue(void) {
+
+vector<State*> *PartitionedClosedHDAStar::PartitionedClosedHDAStarThread::get_queue(void) {
 	return &q;
 }
 
-Mutex *PRAStarVector::PRAStarVectorThread::get_mutex(void) {
+
+Mutex *PartitionedClosedHDAStar::PartitionedClosedHDAStarThread::get_mutex(void) {
 	return &mutex;
 }
 
-void PRAStarVector::PRAStarVectorThread::post_send(void *t) {
-	PRAStarVectorThread *thr = (PRAStarVectorThread*) t;
+
+void PartitionedClosedHDAStar::PartitionedClosedHDAStarThread::post_send(void *t) {
+	PartitionedClosedHDAStarThread *thr = (PartitionedClosedHDAStarThread*) t;
 	if (thr->completed) {
 		thr->cc->uncomplete();
 		thr->completed = false;
@@ -72,7 +76,8 @@ void PRAStarVector::PRAStarVectorThread::post_send(void *t) {
 	thr->q_empty = false;
 }
 
-bool PRAStarVector::PRAStarVectorThread::flush_sends(void) {
+
+bool PartitionedClosedHDAStar::PartitionedClosedHDAStarThread::flush_sends(void) {
 	unsigned int i;
 	bool has_sends = false;
 
@@ -97,7 +102,7 @@ bool PRAStarVector::PRAStarVectorThread::flush_sends(void) {
  * Flush the queue
  */
 
-void PRAStarVector::PRAStarVectorThread::flush_receives(bool has_sends) {
+void PartitionedClosedHDAStar::PartitionedClosedHDAStarThread::flush_receives(bool has_sends) {
 #if defined(INSTRUMENTED)
 	Timer t;
 	bool timer_started = false;
@@ -145,19 +150,21 @@ void PRAStarVector::PRAStarVectorThread::flush_receives(bool has_sends) {
 			delete c;
 			continue;
 		}
-		State *dup = closed.lookup(c);
+		State *dup = p->closed.lookup(c);
 		if (dup) {
 			if (dup->get_g() > c->get_g()) {
 				dup->update(c->get_parent(), c->get_c(), c->get_g());
 				if (dup->is_open())
 					open.see_update(dup);
-				else
+				else {
+					++duplicate;
 					open.add(dup);
+				}
 			}
 			delete c;
 		} else {
 			open.add(c);
-			closed.add(c);
+			p->closed.add(c);
 		}
 	}
 	q.clear();
@@ -165,8 +172,8 @@ void PRAStarVector::PRAStarVectorThread::flush_receives(bool has_sends) {
 	mutex.unlock();
 }
 
-void PRAStarVector::PRAStarVectorThread::do_async_send(unsigned int dest_tid,
-		State *c) {
+
+void PartitionedClosedHDAStar::PartitionedClosedHDAStarThread::do_async_send(unsigned int dest_tid, State *c) {
 	if (!out_qs[dest_tid]) {
 		Mutex *lk = threads->at(dest_tid)->get_mutex();
 		vector<State*> *qu = threads->at(dest_tid)->get_queue();
@@ -177,9 +184,9 @@ void PRAStarVector::PRAStarVectorThread::do_async_send(unsigned int dest_tid,
 	out_qs[dest_tid]->try_send(c);
 }
 
-void PRAStarVector::PRAStarVectorThread::do_sync_send(unsigned int dest_tid,
-		State *c) {
-	PRAStarVectorThread *dest = threads->at(dest_tid);
+
+void PartitionedClosedHDAStar::PartitionedClosedHDAStarThread::do_sync_send(unsigned int dest_tid, State *c) {
+	PartitionedClosedHDAStarThread *dest = threads->at(dest_tid);
 
 	dest->get_mutex()->lock();
 	dest->get_queue()->push_back(c);
@@ -187,17 +194,20 @@ void PRAStarVector::PRAStarVectorThread::do_sync_send(unsigned int dest_tid,
 	dest->get_mutex()->unlock();
 }
 
-void PRAStarVector::PRAStarVectorThread::send_state(State *c) {
+
+void PartitionedClosedHDAStar::PartitionedClosedHDAStarThread::send_state(State *c) {
 	unsigned long hash =
-			p->use_abstraction ? p->project->project(c) : c->dist_hash();
-//	: c->zbrhash();
+			p->use_abstraction ? p->project->project(c)
+//					 : c->hash();
+					: c->dist_hash();
 	unsigned int dest_tid = threads->at(hash % p->n_threads)->get_id();
 	bool self_add = dest_tid == this->get_id();
 
 	assert(p->n_threads != 1 || self_add);
 
 	if (self_add) {
-		State *dup = closed.lookup(c);
+//		printf("t_id = %u\n", this->get_id());
+		State *dup = p->closed.lookup(c);
 		if (dup) {
 			if (dup->get_g() > c->get_g()) {
 				dup->update(c->get_parent(), c->get_c(), c->get_g());
@@ -208,9 +218,8 @@ void PRAStarVector::PRAStarVectorThread::send_state(State *c) {
 			}
 			delete c;
 		} else {
-			++self_push;
 			open.add(c);
-			closed.add(c);
+			p->closed.add(c);
 		}
 		return;
 	}
@@ -222,7 +231,8 @@ void PRAStarVector::PRAStarVectorThread::send_state(State *c) {
 		do_sync_send(dest_tid, c);
 }
 
-State *PRAStarVector::PRAStarVectorThread::take(void) {
+
+State *PartitionedClosedHDAStar::PartitionedClosedHDAStarThread::take(void) {
 	bool has_sends = true;
 
 	expansions += 1;
@@ -255,15 +265,16 @@ State *PRAStarVector::PRAStarVectorThread::take(void) {
  * Run the search thread.
  */
 
-void PRAStarVector::PRAStarVectorThread::run(void) {
+void PartitionedClosedHDAStar::PartitionedClosedHDAStarThread::run(void) {
 	vector<State *> *children = NULL;
 
 	while (!p->is_done()) {
 
 		State *s = take();
-		if (s == NULL)
+		if (s == NULL) {
 			continue;
-
+		}
+//		printf("pop\n");
 		if (s->get_f() >= p->bound.read()) {
 			/*
 			 open.prune();
@@ -278,10 +289,8 @@ void PRAStarVector::PRAStarVectorThread::run(void) {
 		fs.see_f(s->get_f());
 #endif // COUNT_FS
 		children = p->expand(s);
-
-		// Delete if serious serious comparison.
-		++expanded;
-
+//		printf("expd\n");
+		++total_expansion;
 		for (unsigned int i = 0; i < children->size(); i += 1) {
 			State *c = children->at(i);
 			if (c->get_f() < p->bound.read())
@@ -295,68 +304,43 @@ void PRAStarVector::PRAStarVectorThread::run(void) {
 
 /************************************************************/
 
-PRAStarVector::PRAStarVector(unsigned int n_threads, bool use_abst, bool a_send,
-		bool a_recv, unsigned int max_e, unsigned int openlistsize_) :
+
+PartitionedClosedHDAStar::PartitionedClosedHDAStar(unsigned int n_threads, bool use_abst, bool a_send,
+		bool a_recv, unsigned int max_e,
+		unsigned int open_list_division,
+		unsigned int closed_list_size,
+		unsigned int closed_list_division) :
+		closed(closed_list_size, closed_list_division),
 		n_threads(n_threads), bound(fp_infinity), project(NULL), use_abstraction(
 				use_abst), async_send(a_send), async_recv(a_recv), max_exp(
-				max_e), closed_list_size(1000000), openlistsize(openlistsize_),
-				self_pushes(0){
+				max_e) {
 	if (max_e != 0 && !async_send) {
 		cerr << "Max expansions must be zero for synchronous sends" << endl;
 		abort();
 	}
 	done = false;
-	printf("closedlistsize = %u\n", closed_list_size);
 }
 
-PRAStarVector::PRAStarVector(unsigned int n_threads, bool use_abst, bool a_send,
-		bool a_recv, unsigned int max_e, unsigned int openlistsize_,
-		unsigned int closed_list_size_) :
-		n_threads(n_threads), bound(fp_infinity), project(NULL), use_abstraction(
-				use_abst), async_send(a_send), async_recv(a_recv), max_exp(
-				max_e), closed_list_size(closed_list_size_), openlistsize(
-				openlistsize_), self_pushes(0) {
-	if (max_e != 0 && !async_send) {
-		cerr << "Max expansions must be zero for synchronous sends" << endl;
-		abort();
-	}
-	done = false;
-	printf("closedlistsize = %u\n", closed_list_size);
-}
 
-PRAStarVector::~PRAStarVector(void) {
-	vector<unsigned int> expds(threads.size(), 0);
-//	expds.resize(threads.size());
-	unsigned int i = 0;
+PartitionedClosedHDAStar::~PartitionedClosedHDAStar(void) {
 	for (iter = threads.begin(); iter != threads.end(); iter++) {
-		if (*iter) {
-//			printf("%u ", (*iter)->expanded);
-			expds[i] = (*iter)->expanded;
-			++i;
+		if (*iter)
 			delete (*iter);
-		}
 	}
-	double max = 0;
-	double sum = 0;
-	for (unsigned int j = 0; j < expds.size(); ++j) {
-		if (max < expds[j]) {
-			max = expds[j];
-		}
-		sum += expds[j];
-	}
-	printf("load_balance: %f\n", max / (sum / expds.size()) );
-	printf("self_push: %u\n", self_pushes);
 }
 
-void PRAStarVector::set_done() {
+
+void PartitionedClosedHDAStar::set_done() {
 	done = true;
 }
 
-bool PRAStarVector::is_done() {
+
+bool PartitionedClosedHDAStar::is_done() {
 	return done;
 }
 
-void PRAStarVector::set_path(vector<State *> *p) {
+
+void PartitionedClosedHDAStar::set_path(vector<State *> *p) {
 	fp_type b, oldb;
 
 	assert(solutions);
@@ -373,7 +357,8 @@ void PRAStarVector::set_path(vector<State *> *p) {
 	} while (bound.cmp_and_swap(oldb, b) != oldb);
 }
 
-vector<State *> *PRAStarVector::search(Timer *timer, State *init) {
+
+vector<State *> *PartitionedClosedHDAStar::search(Timer *timer, State *init) {
 	solutions = new SyncSolutionStream(timer, 0.0001);
 	project = init->get_domain()->get_projection();
 
@@ -381,7 +366,7 @@ vector<State *> *PRAStarVector::search(Timer *timer, State *init) {
 
 	threads.resize(n_threads, NULL);
 	for (unsigned int i = 0; i < n_threads; i += 1)
-		threads.at(i) = new PRAStarVectorThread(this, &threads, &cc);
+		threads.at(i) = new PartitionedClosedHDAStarThread(this, &threads, &cc);
 
 	if (use_abstraction)
 		threads.at(project->project(init) % n_threads)->open.add(init);
@@ -398,7 +383,8 @@ vector<State *> *PRAStarVector::search(Timer *timer, State *init) {
 	return solutions->get_best_path();
 }
 
-void PRAStarVector::output_stats(void) {
+
+void PartitionedClosedHDAStar::output_stats(void) {
 #if defined(QUEUE_SIZES)
 	max_open_size = 0;
 	avg_open_size = 0;
@@ -429,7 +415,7 @@ void PRAStarVector::output_stats(void) {
 	max_spinning = 0.0;
 	ThreadSpecific<double> lock_times = Mutex::get_lock_times();
 	for (iter = threads.begin(); iter != threads.end(); iter++) {
-		PRAStarThread *thr = *iter;
+		PartitionedClosedHDAStarThread *thr = *iter;
 		double t = thr->time_spinning;
 		double l = lock_times.get_value_for(thr->get_id());
 		if (t > max_spinning)
@@ -451,6 +437,7 @@ void PRAStarVector::output_stats(void) {
 	fs.output_above(o, bound.read());
 	o.close();
 #endif	// COUNT_FS
+
 	if (solutions)
 		solutions->output(cout);
 

@@ -34,7 +34,7 @@ public:
 	TspState(Tsp *d, State *parent, fp_type c, fp_type g, vector<unsigned int>* visited_);
 	TspState(Tsp *d, State *parent, fp_type c, fp_type g, vector<unsigned int>* visited_, unsigned int zbr_val_);
 	virtual bool is_goal(void); // All city already visited and in the home city.
-	virtual uint64_t hash(void) const; // Can make hash with two integer, visited[] and visiting.
+	virtual uint128_t hash(void) const; // Can make hash with two integer, visited[] and visiting.
 	virtual State *clone(void) const; 
 	virtual void print(ostream &o) const;
 	virtual bool equals(State *s) const; // visited and visiting
@@ -44,7 +44,7 @@ public:
 //	virtual int get_visiting(void) const;
 
 	// zobrist hash can be given by visited and visiting.
-	void init_zbrhash(void);
+	void init_zbrhash(unsigned int abstraction, bool is_structure = false);
 	unsigned int dist_hash(void);
 	unsigned int inc_zbrhash(void);
 	unsigned int get_zbr(void){return zbr_val;};

@@ -95,13 +95,17 @@ Tsp::Tsp(istream &s)
  * \return A new state (that must be deleted by the caller) that
  *         represents the initial state.
  */
-State *Tsp::initial_state(void) {
+State *Tsp::initial_state() {
 	vector<unsigned int>* empty = new vector<unsigned int>();
 	printf("initial_state\n");
 	State* state = new TspState(this, NULL, 0, 0, empty);
 	TspState *s = static_cast<TspState*>(state);
-	s->init_zbrhash();
 	return state;
+}
+
+void Tsp::init_zbrhash(unsigned int abstraction, bool is_structure) {
+	TspState *s = static_cast<TspState*>(this->initial_state());
+	s->init_zbrhash(abstraction, is_structure);
 }
 
 /**
@@ -211,32 +215,9 @@ void Tsp::print(ostream &o, const vector<State *> *path = NULL) const {
 /****************************************************************************/
 /****************************************************************************/
 
-Tsp::MinimumSpanningTree::MinimumSpanningTree(const SearchDomain *d) :
-		Heuristic(d) {
+Tsp::MinimumSpanningTree::MinimumSpanningTree(const SearchDomain *d, unsigned int onetree) :
+		Heuristic(d), one(onetree) {
 }
-
-/**
- * Compute the 4-way movement heuristic
- */
-/*fp_type Tsp::ManhattanDist::compute4(const Tsp *w, GridState *s) const {
- int x = s->get_x();
- int y = s->get_y();
- int gx = w->get_goal_x();
- int gy = w->get_goal_y();
-
- fp_type dx = abs(gx - x);
-
- if (w->get_cost_type() == Tsp::UNIT_COST) {
- return (dx + abs(gy - y)) * fp_one;
-
- } else { // Life-cost
- fp_type cost_up_over_down = compute_up_over_down4(x, y, gx, gy);
- fp_type cost_up_over = compute_up_over4(x, y, gx, gy);
-
- return cost_up_over_down < cost_up_over ?
- cost_up_over_down * fp_one : cost_up_over * fp_one;
- }
- }*/
 
 /**
  * Compute the Manhattan distance heuristic.
@@ -254,37 +235,131 @@ fp_type Tsp::MinimumSpanningTree::compute(State *state) const {
 			not_visited[visited[i]] = false;
 		}
 	}
+	// For one tree heuristic.
 
-	double min = 10000.0;
 
 	unsigned int from = 0;
 	if (visited.size() > 0) {
 		from = visited.back();
 	}
-	for (unsigned int i = 0; i < number_of_cities; ++i) {
-		if (not_visited[i] && min > miles[from * number_of_cities + i]) {
-			min = miles[from * number_of_cities + i];
+
+	// Think of init & goal as a vertex out of the minimum spanning tree.
+	// Exclude a situation that those vertexes have two edges, which is not true for TSP.
+	double init_min = 100000.0;
+	double goal_min = 100000.0;
+
+	// TODO: Able to optimize
+	for (unsigned int i = 1; i < number_of_cities; ++i) {
+		if (not_visited[i] && init_min > miles[from * number_of_cities + i]) {
+			init_min = miles[from * number_of_cities + i];
 		}
 	}
+
+	// TODO: Able to optimize
+	for (unsigned int i = 1; i < number_of_cities; ++i) {
+		if (not_visited[i] && goal_min > miles[i * number_of_cities + 0]) {
+			goal_min = miles[i * number_of_cities + 0];
+		}
+	}
+
+	fp_type init = static_cast<fp_type>(init_min * 10000);
+	fp_type goal = static_cast<fp_type>(goal_min * 10000);
+
 //	printf("min = %f\ndist = %u\n", min, dist);
 
 	if (visited.size() == number_of_cities) {
 		return 0;
 	}
 	if (visited.size() == number_of_cities - 1) {
+		fp_type g = static_cast<fp_type>(miles[from * number_of_cities + 0] * 10000);
+//			for (unsigned int i = 0; i < number_of_cities; ++i) {
+//				if (not_visited[i]) {
+//					printf("X");
+//				} else {
+//					printf("O");
+//				}
+//			}
+//		printf(": goal = %u, from %u, ", g, from);
+//		printf("hash = %u,", s->hash());
+//		printf("g = %u\n", s->g);
+
 //		printf("goal: cost = %f\n", min/10000.0);
-		return min;
+		return g;
 	}
 //	printf("mst\n");
 //	printf("not_visited.size = %lu\n", not_visited.size());
-	fp_type mst_cost = mst(&not_visited);
-//	printf("mst_cost = %lu\n", mst_cost);
-	return mst_cost + min;
+	fp_type mst_cost;
+//	if (one) {
+//		mst_cost = onetree(&not_visited);
+//	} else {
+//		mst_cost = mst(&not_visited);
+//	}
 
+	if (one) {
+//		not_visited[visited.back()] = true;
+		not_visited[0] = false;
+		mst_cost = mst(&not_visited) + goal;
+//		mst_cost = mst(&not_visited) + init + goal;
+	} else {
+		not_visited[from] = true;
+		mst_cost = mst(&not_visited);
+	}
+
+//	printf(": mst, init, goal = %lu, %d, %d\n", mst_cost, init, goal);
+
+	return mst_cost;
 }
 
 // Prim's Algorithm
 fp_type Tsp::MinimumSpanningTree::mst(vector<bool> *not_visited) const {
+	vector<unsigned int> vertices; // vertices are the nodes for the MSP.
+	vector<unsigned int> t; // building
+	vector<unsigned int> g_minus_t; // The rest of the graph
+
+//	printf("not_visited = ");
+	double cost = 0;
+
+	for (unsigned int i = 0; i < not_visited->size(); ++i) {
+		if (not_visited->at(i) == true) {
+//			printf("O");
+			vertices.push_back(i);
+			g_minus_t.push_back(i);
+		} else {
+//			printf("X");
+		}
+	}
+//	printf("\n");
+
+	t.push_back(vertices.back()); // initial node
+	g_minus_t.pop_back(); // delete from g_minus_t.
+//	printf("t.size = %lu\n", t.size());
+//	printf("vertices.size = %lu\n", vertices.size());
+	while (t.size() < vertices.size()) {
+		double min_edge = 100000.0; // max edge of this domain is 1.412 (or sqrt(2))
+		unsigned int new_vertex = -1;
+
+		// Get the minimum edge to a new vertex.
+		for (unsigned int i = 0; i < t.size(); ++i) {
+			for (unsigned int j = 0; j < g_minus_t.size(); ++j) {
+				if (miles[t[i] * number_of_cities + g_minus_t[j]] < min_edge) {
+					min_edge = miles[t[i] * number_of_cities + g_minus_t[j]];
+//					new_vertex = g_minus_t[j];
+					new_vertex = j;
+				}
+			}
+		}
+//		printf("new vertex = %u\n", g_minus_t[new_vertex]);
+		t.push_back(g_minus_t[new_vertex]);
+		g_minus_t.erase(g_minus_t.begin() + new_vertex); // This won't be a issue as the size of vector is <100.
+		cost += min_edge;
+	}
+//	printf("cost = %f\n", cost);
+	return static_cast<fp_type>(cost * 10000);
+}
+
+
+// Prim's Algorithm
+fp_type Tsp::MinimumSpanningTree::onetree(vector<bool> *not_visited) const {
 	vector<unsigned int> vertices; // vertices are the nodes for the MSP.
 	vector<unsigned int> t; // building
 	vector<unsigned int> g_minus_t; // The rest of the graph

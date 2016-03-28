@@ -55,16 +55,16 @@ TspState::TspState(Tsp *d, State *parent, fp_type c, fp_type g,
 		this->h = 0;
 	}
 	this->zbr_val = zbr_val_;
-/*	unsigned int n = this->hash();
-	unsigned int cities = d->get_number_of_cities();
-	for (unsigned int i = 0; i < cities - 1; ++i) {
-		n <<= 1;
-		if (n & (1 << cities - 1))
-			printf("1");
-		else
-			printf("0");
-	}
-	printf("\n");*/
+	/*	unsigned int n = this->hash();
+	 unsigned int cities = d->get_number_of_cities();
+	 for (unsigned int i = 0; i < cities - 1; ++i) {
+	 n <<= 1;
+	 if (n & (1 << cities - 1))
+	 printf("1");
+	 else
+	 printf("0");
+	 }
+	 printf("\n");*/
 }
 
 /**
@@ -73,18 +73,26 @@ TspState::TspState(Tsp *d, State *parent, fp_type c, fp_type g,
  */
 bool TspState::is_goal(void) {
 	const Tsp* d = static_cast<const Tsp *>(domain);
-	return visited.size() == d->get_number_of_cities(); // may need to make more safe
+	bool ret = visited.size() == d->get_number_of_cities();
+	if (ret) {
+		printf("cities = %u\n", d->get_number_of_cities());
+		for (unsigned int i = 0; i < visited.size(); ++i) {
+			printf("%u ", visited[i]);
+		}
+		printf("\n");
+	}
+	return ret;
+//	return visited.size() == d->get_number_of_cities(); // may need to make more safe
 }
 
 /**
  * Get the hash value of this state.
  * \return A UNIQUE hash value for this state.
  */
-// TODO: Ad hoc: only works for little n value.
 // may need to use uint128_t. Even so, would be hard.
-uint64_t TspState::hash(void) const {
+uint128_t TspState::hash(void) const {
 	const Tsp *d = static_cast<const Tsp *>(domain);
-	uint64_t hash = 0;
+	uint128_t hash = 0;
 	unsigned int cities = d->get_number_of_cities();
 
 	for (unsigned int i = 0; i < visited.size(); ++i) {
@@ -93,9 +101,18 @@ uint64_t TspState::hash(void) const {
 
 	// The city currently on is different from other perspectives.
 	if (visited.size() > 0) {
-		hash += (visited.back() << cities);
+		hash += (visited.back() << (cities + 1));
 	}
-//	printf("hash = %d\n", hash);
+//
+//	for (unsigned int i = 0; i < cities; ++i) {
+//		if (hash & (1 << (i - 1)) ){
+//			printf("1");
+//		} else {
+//			printf("0");
+//		}
+//	}
+//	printf(": ");
+//	printf("hash = %llu\n", hash);
 	return hash;
 }
 
@@ -123,24 +140,57 @@ void TspState::print(ostream &o) const {
  * TspState equality.
  */
 bool TspState::equals(State *state) const {
+	printf("eq: ");
 	TspState *s;
 	s = static_cast<TspState *>(state);
 	vector<unsigned int> svisited = s->get_visited();
 	if (svisited.size() != visited.size()) {
+		printf("dif size\n");
 		return false;
 	}
-	return equal(svisited.begin(), svisited.end(), visited.begin());
+	for (unsigned int i = 0; i < visited.size(); ++i) {
+		bool exist = false;
+		for (unsigned int j = 0; j < svisited.size(); ++i) {
+			if (visited[i] == svisited[j]) {
+				exist = true;
+				break;
+			}
+		}
+		if (exist == false) {
+			printf("dif num\n");
+			return false;
+		}
+	}
+	printf("equal\n");
+	for (unsigned int i = 0; i < visited.size(); ++i) {
+		printf("%u ", visited[i]);
+	}
+	printf("\n");
+	for (unsigned int i = 0; i < svisited.size(); ++i) {
+		printf("%u ", svisited[i]);
+	}
+	printf("\n");
+
+	return true;
 }
 
 vector<unsigned int> TspState::get_visited(void) const {
 	return visited;
 }
 
-void TspState::init_zbrhash(void) {
+void TspState::init_zbrhash(unsigned int abstraction, bool is_structure /* = false*/) {
 	const Tsp* d = static_cast<const Tsp *>(domain);
-	for (unsigned int i = 0; i < d->get_number_of_cities(); ++i) {
-		zbr_table[i] = rand();
+	if (is_structure) {
+
+	} else {
+		for (unsigned int i = 0; i < d->get_number_of_cities(); ++i) {
+			zbr_table[i] = 0;
+		}
+		for (unsigned int i = 0; i < d->get_number_of_cities(); i +=
+				abstraction) {
+			zbr_table[i] = rand();
 //		printf("zbr[%u] = %u\n", i, zbr_table[i]);
+		}
 	}
 }
 

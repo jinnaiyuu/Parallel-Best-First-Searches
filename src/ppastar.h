@@ -9,8 +9,8 @@
  * \date 2008-11-19
  */
 
-#if !defined(_PRASTAR_H_)
-#define _PRASTAR_H_
+#if !defined(_PPASTAR_H_)
+#define _PPASTAR_H_
 
 #include <vector>
 
@@ -22,18 +22,30 @@
 #include "util/msg_buffer.h"
 #include "util/atomic_int.h"
 #include "util/thread.h"
-#include "synch_pq_olist.h"
-#include "synch_closed_list.h"
+
+//#include "synch_pq_olist.h"
+//#include "synch_closed_list.h"
+
+#include "partitioned_pq_open_list.h"
+#include "partitioned_closed_list.h"
+
 #include "util/completion_counter.h"
 
 using namespace std;
 
-class PRAStar: public Search {
+class PPAStar: public Search {
 public:
-	PRAStar(unsigned int n_threads, bool use_abst, bool async_send,
-			bool async_recv, unsigned int max_exp);
 
-	virtual ~PRAStar(void);
+	// 1. open list division
+	// 2. closed list size (default = 1,000,000)
+	// 3. closed list division ()
+	PPAStar(unsigned int n_threads, bool use_abst, bool async_send,
+			bool async_recv, unsigned int max_exp,
+			unsigned int open_list_division,
+			unsigned int closed_list_size,
+			unsigned int closed_list_division);
+
+	virtual ~PPAStar(void);
 
 	virtual vector<State *> *search(Timer *t, State *init);
 	void set_done();
@@ -44,61 +56,59 @@ public:
 	virtual void output_stats(void);
 
 private:
-	class PRAStarThread: public Thread {
+	class PPAStarThread: public Thread {
 	public:
-		PRAStarThread(PRAStar *p, vector<PRAStarThread *> *threads,
+		PPAStarThread(PPAStar *p, vector<PPAStarThread *> *threads,
 				CompletionCounter* cc);
-		virtual ~PRAStarThread(void);
+		virtual ~PPAStarThread(void);
 		virtual void run(void);
 
 		/**
 		 * Gets a pointer to the message queue.
 		 */
-		vector<State*> *get_queue(void);
+//		vector<State*> *get_queue(void);
 
 		/**
 		 * Gets the lock on the message queue.
 		 */
-		Mutex *get_mutex(void);
+//		Mutex *get_mutex(void);
 
 		/**
 		 * Should be called when the message queue has had
 		 * things added to it.
 		 */
-		static void post_send(void *thr);
+//		static void post_send(void *thr);
 
-		State *take(void);
+//		State *take(void);
 
 	private:
 		/* Flushes the send queues. */
-		bool flush_sends(void);
-
+//		bool flush_sends(void);
 		/* flushes the queue into the open list. */
-		void flush_receives(bool has_sends);
+//		void flush_receives(bool has_sends);
 
 		/* sends the state to the appropriate thread (possibly
 		 * this thread). */
-		void send_state(State *c);
+//		void send_state(State *c);
 
 		/* Perform an asynchronous send to another thread (not called
 		 * for self-sends). */
-		void do_async_send(unsigned int dest_tid, State *c);
+//		void do_async_send(unsigned int dest_tid, State *c);
 
 		/* Perform an synchronous send to another thread (not called
 		 * for self-sends). */
-		void do_sync_send(unsigned int dest_tid, State *c);
-
-		PRAStar *p;
+//		void do_sync_send(unsigned int dest_tid, State *c);
+		PPAStar *p;
 
 		/* List of the other threads */
-		vector<PRAStarThread *> *threads;
+		vector<PPAStarThread *> *threads;
 
 		/* The incoming message queue. */
-		vector<State *> q;
-		Mutex mutex;
+//		vector<State *> q;
+//		Mutex mutex;
 
 		/* The outgoing message queues (allocated lazily). */
-		vector<MsgBuffer<State*>*> out_qs;
+//		vector<MsgBuffer<State*>*> out_qs;
 
 		/* Marks whether or not this thread has posted completion */
 		bool completed;
@@ -109,30 +119,33 @@ private:
 		/* A pointer to the completion counter. */
 		CompletionCounter *cc;
 
-		friend class PRAStar;
+		friend class PPAStar;
 
 		/* Search queues */
 		// TODO: This should be replaced by vector open list.
-		PQOpenList<State::PQOpsFPrime> open;
-
-		ClosedList closed; // TODO: Change the size of closed list.
+//		PQOpenList<State::PQOpsFPrime> open;
+//
+//		ClosedList closed; // TODO: Change the size of closed list.
 		bool q_empty;
 
 		/* statistics */
 		double time_spinning;
 
 		unsigned int total_expansion;
-		unsigned int self_push;
 		unsigned int duplicate;
 	};
+
+	PartitionedPQOpenList<State::PQOpsFPrime> open;
+
+	PartitionedClosedList closed; // TODO: Change the size of closed list.
 
 	bool done;
 	pthread_cond_t cond;
 	const unsigned int n_threads;
 	AtomicInt bound;
 	const Projection *project;
-	vector<PRAStarThread *> threads;
-	typename vector<PRAStarThread *>::iterator iter;
+	vector<PPAStarThread *> threads;
+	typename vector<PPAStarThread *>::iterator iter;
 
 	SolutionStream *solutions;
 
@@ -153,8 +166,6 @@ private:
 	double max_spinning;
 	double avg_open_size;
 	unsigned int max_open_size;
-
-	unsigned int self_push;
 
 #if defined(COUNT_FS)
 	static F_hist fs;

@@ -27,6 +27,7 @@ SRC= \
 	incons_list.cc \
 	lf_closedlist.cc \
 	synch_closed_list.cc \
+	partitioned_closed_list.cc \
 	search.cc \
 	astar.cc \
 	optimistic.cc \
@@ -61,6 +62,8 @@ SRC= \
 	tiles/tiles_costs.cc \
 	tsp/tsp_state.cc \
 	tsp/tsp.cc \
+	msa/msa_state.cc \
+	msa/msa_world.cc \
 	psdd/nblock.cc \
 	psdd/nblock_graph.cc \
 	psdd_search.cc \
@@ -90,7 +93,9 @@ SRC= \
 	pastar_vector.cc \
 	prastar_vector.cc \
 	prastar_multiheap.cc \
-	wprastar.cc
+	wprastar.cc \
+	partitioned_closed_hdastar.cc \
+	ppastar.cc
 
 OBJ=$(addprefix $(OBJDIR)/, $(SRC:.cc=.o))
 OBJ+=$(LIBLOCKFREE)
@@ -162,9 +167,11 @@ PROGS=$(addsuffix .$(MARCH), \
 	grid_search \
 	tiles_search \
 	tsp_search \
-	grid_search_sync \
-	tiles_search_sync \
+	msa_search \
 )
+#	grid_search_sync \
+#	tiles_search_sync \
+
 
 all: objdirs $(PROGS)
 
@@ -176,51 +183,54 @@ tiles_search.$(MARCH): $(OBJ) tiles_search.cc
 
 tsp_search.$(MARCH): $(OBJ) tsp_search.cc
 	$(CXX) $(CXXFLAGS) -o $@ $(OBJ) $(LDFLAGS) tsp_search.cc
+	
+msa_search.$(MARCH): $(OBJ) msa_search.cc
+	$(CXX) $(CXXFLAGS) -o $@ $(OBJ) $(LDFLAGS) msa_search.cc
 
-grid_search_sync.$(MARCH): $(OBJ) grid_search_sync.cc
-	$(CXX) $(CXXFLAGS) -o $@ $(OBJ) $(LDFLAGS) grid_search_sync.cc
+#grid_search_sync.$(MARCH): $(OBJ) grid_search_sync.cc
+#	$(CXX) $(CXXFLAGS) -o $@ $(OBJ) $(LDFLAGS) grid_search_sync.cc
+#
+#tiles_search_sync.$(MARCH): $(OBJ) tiles_search_sync.cc
+#	$(CXX) $(CXXFLAGS) -o $@ $(OBJ) $(LDFLAGS) tiles_search_sync.cc
 
-tiles_search_sync.$(MARCH): $(OBJ) tiles_search_sync.cc
-	$(CXX) $(CXXFLAGS) -o $@ $(OBJ) $(LDFLAGS) tiles_search_sync.cc
-
-thread_test.$(MARCH): $(OBJ) util/thread_test.cc
-	$(CXX) $(CXXFLAGS) -o $@ $(OBJ) $(LDFLAGS) util/thread_test.cc
-
-atomic_int_test.$(MARCH): $(OBJ) util/atomic_int_test.cc
-	$(CXX) $(CXXFLAGS) -o $@ $(OBJ) $(LDFLAGS) util/atomic_int_test.cc
-
-psdd_nblock_graph_test.$(MARCH): $(OBJ) psdd/nblock_graph_test.cc
-	$(CXX) $(CXXFLAGS) -o $@ $(OBJ) $(LDFLAGS) psdd/nblock_graph_test.cc
-
-pbnf_nblock_graph_test.$(MARCH): $(OBJ) pbnf/nblock_graph_test.cc
-	$(CXX) $(CXXFLAGS) -o $@ $(OBJ) $(LDFLAGS) pbnf/nblock_graph_test.cc
-
-tiles_hash_test.$(MARCH): $(OBJ) tiles/tiles_hash_test.cc
-	$(CXX) $(CXXFLAGS) -o $@ $(OBJ) $(LDFLAGS) tiles/tiles_hash_test.cc
-
-tiles_read_test.$(MARCH): $(OBJ) tiles/tiles_read_test.cc
-	$(CXX) $(CXXFLAGS) -o $@ $(OBJ) $(LDFLAGS) tiles/tiles_read_test.cc
-
-atomic_float_test.$(MARCH): $(OBJ) util/atomic_float_test.cc
-	$(CXX) $(CXXFLAGS) -o $@ $(OBJ) $(LDFLAGS) util/atomic_float_test.cc
-
-div_merge_project_test.$(MARCH): $(OBJ) tiles/div_merge_project_test.cc
-	$(CXX) $(CXXFLAGS) -o $@ $(OBJ) $(LDFLAGS) tiles/div_merge_project_test.cc
-
-one_tile_project_test.$(MARCH): $(OBJ) tiles/one_tile_project_test.cc
-	$(CXX) $(CXXFLAGS) -o $@ $(OBJ) $(LDFLAGS) tiles/one_tile_project_test.cc
-
-two_tile_project_test.$(MARCH): $(OBJ) tiles/two_tile_project_test.cc
-	$(CXX) $(CXXFLAGS) -o $@ $(OBJ) $(LDFLAGS) tiles/two_tile_project_test.cc
-
-two_tile_no_blank_project_test.$(MARCH): $(OBJ) tiles/two_tile_no_blank_project_test.cc
-	$(CXX) $(CXXFLAGS) -o $@ $(OBJ) $(LDFLAGS) tiles/two_tile_no_blank_project_test.cc
-
-pq_open_list_test.$(MARCH): $(OBJ) pq_open_list_test.cc
-	$(CXX) $(CXXFLAGS) -o $@ $(OBJ) $(LDFLAGS) pq_open_list_test.cc
-
-pq_test.$(MARCH): $(OBJ) util/pq_test.cc
-	$(CXX) $(CXXFLAGS) -o $@ $(OBJ) $(LDFLAGS) util/pq_test.cc
+#thread_test.$(MARCH): $(OBJ) util/thread_test.cc
+#	$(CXX) $(CXXFLAGS) -o $@ $(OBJ) $(LDFLAGS) util/thread_test.cc
+#
+#atomic_int_test.$(MARCH): $(OBJ) util/atomic_int_test.cc
+#	$(CXX) $(CXXFLAGS) -o $@ $(OBJ) $(LDFLAGS) util/atomic_int_test.cc
+#
+#psdd_nblock_graph_test.$(MARCH): $(OBJ) psdd/nblock_graph_test.cc
+#	$(CXX) $(CXXFLAGS) -o $@ $(OBJ) $(LDFLAGS) psdd/nblock_graph_test.cc
+#
+#pbnf_nblock_graph_test.$(MARCH): $(OBJ) pbnf/nblock_graph_test.cc
+#	$(CXX) $(CXXFLAGS) -o $@ $(OBJ) $(LDFLAGS) pbnf/nblock_graph_test.cc
+#
+#tiles_hash_test.$(MARCH): $(OBJ) tiles/tiles_hash_test.cc
+#	$(CXX) $(CXXFLAGS) -o $@ $(OBJ) $(LDFLAGS) tiles/tiles_hash_test.cc
+#
+#tiles_read_test.$(MARCH): $(OBJ) tiles/tiles_read_test.cc
+#	$(CXX) $(CXXFLAGS) -o $@ $(OBJ) $(LDFLAGS) tiles/tiles_read_test.cc
+#
+#atomic_float_test.$(MARCH): $(OBJ) util/atomic_float_test.cc
+#	$(CXX) $(CXXFLAGS) -o $@ $(OBJ) $(LDFLAGS) util/atomic_float_test.cc
+#
+#div_merge_project_test.$(MARCH): $(OBJ) tiles/div_merge_project_test.cc
+#	$(CXX) $(CXXFLAGS) -o $@ $(OBJ) $(LDFLAGS) tiles/div_merge_project_test.cc
+#
+#one_tile_project_test.$(MARCH): $(OBJ) tiles/one_tile_project_test.cc
+#	$(CXX) $(CXXFLAGS) -o $@ $(OBJ) $(LDFLAGS) tiles/one_tile_project_test.cc
+#
+#two_tile_project_test.$(MARCH): $(OBJ) tiles/two_tile_project_test.cc
+#	$(CXX) $(CXXFLAGS) -o $@ $(OBJ) $(LDFLAGS) tiles/two_tile_project_test.cc
+#
+#two_tile_no_blank_project_test.$(MARCH): $(OBJ) tiles/two_tile_no_blank_project_test.cc
+#	$(CXX) $(CXXFLAGS) -o $@ $(OBJ) $(LDFLAGS) tiles/two_tile_no_blank_project_test.cc
+#
+#pq_open_list_test.$(MARCH): $(OBJ) pq_open_list_test.cc
+#	$(CXX) $(CXXFLAGS) -o $@ $(OBJ) $(LDFLAGS) pq_open_list_test.cc
+#
+#pq_test.$(MARCH): $(OBJ) util/pq_test.cc
+#	$(CXX) $(CXXFLAGS) -o $@ $(OBJ) $(LDFLAGS) util/pq_test.cc
 
 .PHONY: $(LIBLOCKFREE)
 $(LIBLOCKFREE):

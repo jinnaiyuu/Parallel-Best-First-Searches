@@ -10,17 +10,18 @@
  */
 
 #include <assert.h>
-#include "tsp/tsp_state.h"
 
-#include "astar.h"
+#include "astar_vector.h"
 
-AStar::AStar(void) : dd(false) { }
+AStarVector::AStarVector(unsigned int openlistsize) : dd(false) {
+	open.changeSize(openlistsize);
+}
 
-AStar::AStar(bool d) : dd(d) { }
+AStarVector::AStarVector(unsigned int openlistsize, unsigned int closedlistsize) : dd(false), closed(closedlistsize){
+	open.changeSize(openlistsize);
+}
 
-AStar::AStar(unsigned int closedlistsize) : dd(false), closed(closedlistsize) { }
-
-AStar::~AStar(void)
+AStarVector::~AStarVector(void)
 {
 	closed.delete_all_states();
 }
@@ -29,13 +30,15 @@ AStar::~AStar(void)
 /**
  * Perform an A* search.
  */
-vector<State *> *AStar::search(Timer *t, State *init)
+vector<State *> *AStarVector::search(Timer *t, State *init)
 {
 	vector<State *> *path = NULL;
 
 	open.add(init);
 
 	while (!open.empty() && !path) {
+//		printf("astar::search loop\n");
+
 		State *s = open.take();
 
 		if (s->is_goal()) {
@@ -45,46 +48,31 @@ vector<State *> *AStar::search(Timer *t, State *init)
 		}
 
 		vector<State *> *children = expand(s);
-//		printf("%u children\n", children->size());
 		for (unsigned int i = 0; i < children->size(); i += 1) {
-//			printf("i = %u\n", i);
 			State *c = children->at(i);
-//			printf("c->hash = %u\n", c->hash());
 			State *dup = closed.lookup(c);
-//			if (!dup) {
-//				printf("dup NULL\n");
-//			} else {
-//				printf("dup ok");
-//			}
 			if (dup) {
-//				printf("duped\n");
-
 				if (dup->get_g() > c->get_g()) {
-				  // TODO: count how much duplication occurs
 					dup->update(c->get_parent(), c->get_c(), c->get_g());
 					if (dup->is_open())
 						open.see_update(dup);
 					else if (!dd)
 						open.add(dup);
 				}
-//				printf("del\n");
-
 				delete c;
-//				printf("deleted\n");
 			} else {
 				open.add(c);
 				closed.add(c);
 			}
 
 		}
-//		printf("expddone\n");
 		delete children;
 	}
 
 	return path;
 }
 
-void AStar::output_stats(void)
+void AStarVector::output_stats(void)
 {
 	open.print_stats(cout);
 	cout << "total-time-acquiring-locks: 0" << endl;

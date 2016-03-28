@@ -51,11 +51,13 @@ class PQVectorOpenList : public OpenList {
 
 			// p is h value here.
 			void push(State *n, int p) {
-//				printf("Maxq::push\n");
+//				printf("Maxq::push %u %u %d\n", n->h, n->g, p);
 				assert (p >= 0);
-				if (bins.size() <= (unsigned int) p)
+//				printf("bins.size = %u\n", bins.size());
+				if (bins.size() <= (unsigned int) p) {
 					bins.resize(p+1);
-
+				}
+//				printf("bins.size = %u\n", bins.size());
 				if (p > max)
 					max = p;
 
@@ -81,6 +83,25 @@ class PQVectorOpenList : public OpenList {
 				fill--;
 				return n;
 			}
+
+			State *peek(void) {
+//				printf("Maxq::peek\n");
+//				printf("max = %u\n", max);
+//				printf("bins.size = %u\n", bins.size());
+				for ( ; bins[max].empty(); max--) {
+//					printf("max = %u\n", max);
+					if (max == 0) {
+						printf("max==0\n");
+						break;
+					}
+				}
+//				printf("peek");
+				State *n = bins[max].back();
+//				fill--;
+//				printf("return");
+				return n;
+			}
+
 /*
 			void rm(State *n, unsigned long p) {
 				assert (p < bins.size());
@@ -114,6 +135,7 @@ class PQVectorOpenList : public OpenList {
 
 public:
 	PQVectorOpenList(void);
+	//	~PQVectorOpenList(void);
 	void changeSize(unsigned int size);
 	void add(State *s);
 	State *take(void);
@@ -132,6 +154,9 @@ public:
 	/* Verify the heap property holds */
 	void verify();
 
+	void print_quality();
+	void print_distribution();
+
 #if defined(TIME_QUEUES)
 	double get_cpu_sum(void) { return cpu_time_sum; }
 	unsigned long get_time_count(void) { return time_count; }
@@ -140,6 +165,8 @@ private:
 //	PriorityQueue<State *, PQCompare> pq;
 	int fill, min;
 	std::vector<Maxq> pq;
+	std::vector<unsigned int> node_quality;
+
 
 //	PQCompare get_index;
 //	PQCompare comp;

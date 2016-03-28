@@ -1,7 +1,7 @@
 // © 2014 the PBNF Authors under the MIT license. See AUTHORS for the list of authors.
 
 /**
- * \file grid_search.cc
+ * \file msa_search.cc
  *
  *
  *
@@ -15,6 +15,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include <fstream>
 #include <iostream>
 #include <vector>
 
@@ -22,7 +23,7 @@
 #include "state.h"
 #include "search.h"
 #include "h_zero.h"
-#include "grid/grid_world.h"
+#include "msa/msa_world.h"
 #include "util/timer.h"
 #include "util/timeout.h"
 #include "util/fixed_point.h"
@@ -31,25 +32,33 @@ using namespace std;
 
 int main(int argc, char *argv[])
 {
-	unsigned int timelimit = 180;	// seconds
+	unsigned int timelimit = 5000;	// seconds
 	vector<State *> *path;
 	Search *search = get_search(argc, argv);
-	GridWorld g(cin);
+
+	std::ifstream pam("PAM250");
+	MSAWorld g(pam, cin);
 
 
 	Timer timer;
 
-	unsigned int root = (unsigned int) sqrt((double)nblocks);
-//	GridWorld::RowModProject project(&g, nblocks);
-	GridWorld::CoarseProject project(&g, root, root);
+//	unsigned int root = (unsigned int) sqrt((double)nblocks);
+//	MSAWorld::RowModProject project(&g, nblocks);
+	MSAWorld::RowModProject project(&g, nblocks);
+
+	if (argc > 2) {
+		g.set_abstraction(stoi(argv[2]));
+	} else {
+		g.set_abstraction(1);
+	}
+
 	g.set_projection(&project);
 
-//	HZero hzero(&g);
-//	g.set_heuristic(&hzero);
-	GridWorld::ManhattanDist manhattan(&g);
-	manhattan.set_weight(weight);
-	g.set_heuristic(&manhattan);
+	MSAWorld::Pairwise p(&g);
+	p.set_weight(1);
+	g.set_heuristic(&p);
 
+	printf("start\n");
 
 #if defined(NDEBUG)
 	timeout(timelimit);

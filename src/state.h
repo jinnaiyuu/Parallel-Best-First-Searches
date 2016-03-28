@@ -11,6 +11,9 @@
 #if !defined(_STATE_H_)
 #define _STATE_H_
 
+#include <stdint.h>
+typedef unsigned int uint128_t __attribute__((mode(TI)));
+
 #include <iostream>
 #include <vector>
 
@@ -148,7 +151,7 @@ public:
 
 	virtual SearchDomain *get_domain(void) const;
 
-	virtual uint64_t hash(void) const = 0;
+	virtual uint128_t hash(void) const = 0;
 	virtual bool is_goal(void) = 0;
 	virtual State *clone(void) const = 0;
 	virtual void print(ostream &o) const = 0;
@@ -160,6 +163,8 @@ public:
 	fp_type get_f_prime(void) const;
 	fp_type get_c(void) const;
 	fp_type get_g(void) const;
+	fp_type get_priority(void) const;
+
 	void update(State *parent, fp_type c, fp_type g);
 	fp_type get_h(void) const;
 	State *get_parent(void) const;

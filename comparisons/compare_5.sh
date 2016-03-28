@@ -64,7 +64,7 @@ gnuplot<<EOF
 #   replot "${data9}.correctrate" u 2:1 w steps title "$data9"
 EOF
 
-rm *.correctrate*
+rm */*.correctrate*
 
 
 exit 0

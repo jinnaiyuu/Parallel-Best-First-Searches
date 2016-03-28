@@ -60,7 +60,8 @@ int main(int argc, char *argv[]) {
 	g.set_projection(project);
 
 //	printf("MSP\n");
-	Tsp::MinimumSpanningTree msp(&g);
+	Tsp::MinimumSpanningTree mst(&g, 0);
+	Tsp::MinimumSpanningTree onetree(&g, 1);
 	Tsp::RoundTripDistance rtd(&g);
 	Tsp::Blind blind(&g);
 // If parameter given as blind, then run blind heuristic.
@@ -69,10 +70,18 @@ int main(int argc, char *argv[]) {
 		g.set_heuristic(&blind);
 	} else if (argc >= 3 &&(strcmp(argv[2], "round") == 0)){
 		g.set_heuristic(&rtd);
+	} else if (argc >= 3 &&(strcmp(argv[2], "onetree") == 0)){
+		g.set_heuristic(&onetree);
 	} else {
-		g.set_heuristic(&msp);
+		g.set_heuristic(&mst);
 	}
 
+	unsigned int abstraction = 1;
+	for (int i = 0; i < argc; ++i){
+		if(sscanf(argv[i], "abstraction-%u", &abstraction) == 1) {
+
+		}
+	}
 	printf("heuristic done\n");
 
 #if defined(NDEBUG)
@@ -80,6 +89,8 @@ int main(int argc, char *argv[]) {
 #endif	// NDEBUG
 	timer.start();
 	State* inits = g.initial_state();
+	g.init_zbrhash(abstraction);
+
 	printf("start search\n");
 	path = search->search(&timer, inits);
 	timer.stop();

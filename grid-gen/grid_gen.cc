@@ -4,13 +4,13 @@
 
 /**
  *
- * input <height> <width> <prob of wall>
+ * input <prob of space> <number of instances>
  * 
  * ex. ./grid_gen 10-10-0.5
  */
 
-#define WIDTH 5000
-#define HEIGHT 5000
+#define WIDTH 500
+#define HEIGHT 500
 
 static bool board[WIDTH][HEIGHT];
 

@@ -9,28 +9,29 @@
  * \date 2008-10-09
  */
 
-#if !defined(_A_STAR_H_)
-#define _A_STAR_H_
+#if !defined(_A_STAR_VECTOR_H_)
+#define _A_STAR_VECTOR_H_
 
 #include "state.h"
 #include "search.h"
 #include "closed_list.h"
 #include "pq_open_list.h"
+#include "pq_vector_open_list.h"
 
 /**
  * An A* search class.
  */
-class AStar : public Search {
+class AStarVector : public Search {
 public:
-	AStar(void);
-	AStar(bool dd);
-	AStar(unsigned int closedlistsize);
-	virtual ~AStar(void);
+	AStarVector(unsigned int openlistsize);
+	AStarVector(unsigned int openlistsize, unsigned int closedlistsize);
+//	AStarVector(bool dd);
+	virtual ~AStarVector(void);
 	virtual vector<State *> *search(Timer *, State *);
 
 	void output_stats(void);
 private:
-	PQOpenList<State::PQOpsFPrime> open;
+	PQVectorOpenList open;
 	ClosedList closed;
 	bool dd;		/* dup dropping */
 };

@@ -71,6 +71,12 @@ fp_type State::get_g(void) const
 	return g;
 }
 
+// The smaller the better.
+fp_type State::get_priority(void) const
+{
+	return (g + h) * 100000 + h;
+}
+
 /**
  * Set the g value for this state.
  */

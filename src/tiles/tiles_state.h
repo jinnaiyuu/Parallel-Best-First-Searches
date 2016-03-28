@@ -29,7 +29,7 @@ public:
 		   unsigned int blank);
 
 	virtual bool is_goal(void);
-	virtual uint64_t hash(void) const;
+	virtual uint128_t hash(void) const;
 	virtual State *clone(void) const;
 	virtual void print(ostream &o) const;
 	virtual bool equals(State *s) const;

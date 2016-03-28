@@ -40,6 +40,8 @@
 #include "wpbnf_search.h"
 #include "pastar.h"
 #include "prastar.h"
+#include "partitioned_closed_hdastar.h"
+#include "ppastar.h"
 #include "wprastar.h"
 #include "optimistic.h"
 
@@ -123,6 +125,10 @@ Search *get_search(int argc, char *argv[])
 	unsigned int openlistsize = 0;
 	unsigned int closedlistsize = 0;
 
+	// For ppastar & phdastar
+	unsigned int openlistdivision = 0;
+	unsigned int closedlistdivision = 0;
+
 	unsigned int n_heaps = 0;
 
 	if (argc > 1 && strcmp(argv[1], "astar") == 0) {
@@ -133,6 +139,8 @@ Search *get_search(int argc, char *argv[])
 		return new AStarVector(openlistsize, closedlistsize);
 	} else if (argc > 1 && sscanf(argv[1], "astar-vector-%u", &openlistsize) == 1) {
 		return new AStarVector(openlistsize);
+	} else if (argc > 1 && sscanf(argv[1], "astar-closed-%u", &closedlistsize) == 1) {
+		return new AStar(closedlistsize);
 
 	} else if (argc > 1 && sscanf(argv[1], "wastar-%lf", &weight) == 1) {
 		return new AStar(false);
@@ -202,6 +210,20 @@ Search *get_search(int argc, char *argv[])
 
 	} else if (argc > 1 && sscanf(argv[1], "ahdastar-%lf-%u-%u-%u", &weight, &max_e, &threads, &nblocks) == 4) {
 		return new PRAStar(threads, true, true, true, max_e);
+
+		// Partitioned Closed list and Open lists.
+	} else if (argc > 1 && sscanf(argv[1], "phdastar-%u-%u-%u-%u", &threads,
+			&openlistsize, &closedlistsize, &closedlistdivision) == 4) {
+		return new PartitionedClosedHDAStar(threads, true, true, true, 10000000 /*max_e*/,
+				openlistsize, closedlistsize, closedlistdivision);
+
+	} else if (argc > 1 && sscanf(argv[1], "ppastar-%u-%u-%u-%u", &threads,
+			&openlistdivision, &closedlistsize, &closedlistdivision) == 4) {
+		return new PPAStar(threads, true, true, true, 10000000 /*max_e*/,
+				openlistdivision, closedlistsize, closedlistdivision);
+
+
+
 
 	} else if (argc > 1 && sscanf(argv[1], "hdastar-syncsends-%u", &threads) == 1) {
 		return new PRAStar(threads, false,

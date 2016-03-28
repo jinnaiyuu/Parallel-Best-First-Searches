@@ -39,7 +39,7 @@ F_hist PRAStar::fs;
 PRAStar::PRAStarThread::PRAStarThread(PRAStar *p,
 		vector<PRAStarThread *> *threads, CompletionCounter* cc) :
 		p(p), threads(threads), cc(cc), q_empty(true),
-		total_expansion(0), duplicate(0){
+		total_expansion(0), duplicate(0), self_push(0){
 	expansions = 0;
 	time_spinning = 0;
 	out_qs.resize(threads->size(), NULL);
@@ -54,6 +54,7 @@ PRAStar::PRAStarThread::~PRAStarThread(void) {
 			delete *i;
 	printf("expd = %u\n", total_expansion);
 	printf("duplicate = %u\n", duplicate);
+	p->self_push += this->self_push;
 }
 
 
@@ -206,6 +207,7 @@ void PRAStar::PRAStarThread::send_state(State *c) {
 	assert(p->n_threads != 1 || self_add);
 
 	if (self_add) {
+		++self_push;
 		State *dup = closed.lookup(c);
 		if (dup) {
 			if (dup->get_g() > c->get_g()) {
@@ -306,7 +308,7 @@ PRAStar::PRAStar(unsigned int n_threads, bool use_abst, bool a_send,
 		bool a_recv, unsigned int max_e) :
 		n_threads(n_threads), bound(fp_infinity), project(NULL), use_abstraction(
 				use_abst), async_send(a_send), async_recv(a_recv), max_exp(
-				max_e) {
+				max_e), self_push(0) {
 	if (max_e != 0 && !async_send) {
 		cerr << "Max expansions must be zero for synchronous sends" << endl;
 		abort();
@@ -320,6 +322,7 @@ PRAStar::~PRAStar(void) {
 		if (*iter)
 			delete (*iter);
 	}
+	printf("self_pushes: %u\n", self_push);
 }
 
 

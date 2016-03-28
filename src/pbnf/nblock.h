@@ -84,8 +84,8 @@ namespace PBNF {
 		unsigned int id;
 		unsigned int sigma;
 		ClosedList closed;
-//		PQOpenList<State::PQOpsFPrime> open;
-		PQVectorOpenList open;
+		PQOpenList<State::PQOpsFPrime> open;
+//		PQVectorOpenList open;
 		unsigned int sigma_hot;
 		int hot;
 		int inuse;

@@ -116,8 +116,8 @@ vector<State *> *PBNFSearch::PBNFThread::search_nblock(NBlock *n)
 			}
 			unsigned int block = search->project->project(*iter);
 			// TODO:
-//			PQOpenList<State::PQOpsFPrime> *next_open =
-			PQVectorOpenList *next_open =
+			PQOpenList<State::PQOpsFPrime> *next_open =
+//			PQVectorOpenList *next_open =
 			&graph->get_nblock(block)->open;
 
 			ClosedList *next_closed =

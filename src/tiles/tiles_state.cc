@@ -95,7 +95,7 @@ bool TilesState::is_goal(void) {
 	return t->is_goal(this);
 }
 
-uint64_t TilesState::hash(void) const {
+uint128_t TilesState::hash(void) const {
 	return hash_val;
 }
 

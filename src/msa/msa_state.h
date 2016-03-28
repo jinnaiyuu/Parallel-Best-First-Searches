@@ -1,7 +1,7 @@
 /* © 2014 the PBNF Authors under the MIT license. See AUTHORS for the list of authors.*/
 
 /**
- * \file grid_state.h
+ * \file msa_state.h
  *
  *
  *
@@ -9,20 +9,20 @@
  * \date 2008-10-08
  */
 
-#if !defined(_GRID_STATE_H_)
-#define _GRID_STATE_H_
+#if !defined(_MSA_STATE_H_)
+#define _MSA_STATE_H_
 
 #include <vector>
 
-#include "grid_world.h"
+#include "msa_world.h"
 #include "../state.h"
 #include "../search_domain.h"
 
 using namespace std;
 
-class GridState : public State {
+class MSAState : public State {
 public:
-	GridState(GridWorld *d, State *parent, fp_type c, fp_type g, int x, int y);
+	MSAState(MSAWorld *d, State *parent, fp_type c, fp_type g, vector<unsigned int> sequence);
 
 	virtual bool is_goal(void);
 	virtual uint128_t hash(void) const;
@@ -30,12 +30,16 @@ public:
 	virtual void print(ostream &o) const;
 	virtual bool equals(State *s) const;
 
-	virtual int get_x(void) const;
-	virtual int get_y(void) const;
-	void init_zbrhash(void) {;};
+	void init_zbrhash(void);
 	unsigned int dist_hash(void);
+	std::vector<unsigned int> sequence;
+
 private:
-	int x, y;
+	unsigned int zobrist_hash(void); // disth = 0
+
+
+	static unsigned int zbr_table[10][200];
+//	int h;
 };
 
 #endif	/* !_GRID_STATE_H_ */
