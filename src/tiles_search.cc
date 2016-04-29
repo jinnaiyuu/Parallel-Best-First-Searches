@@ -29,19 +29,19 @@
 
 using namespace std;
 
-int main(int argc, char *argv[])
-{
-	unsigned int timelimit = 20000;	// seconds
+int main(int argc, char *argv[]) {
+	unsigned int timelimit = 20000; // seconds
 	vector<State *> *path;
 	Search *search = get_search(argc, argv);
 
 	printf("got search\n");
-	if (strcmp(argv[1], "arastar") == 0) {	// hack to peal off extra ARA* argument
+	if (strcmp(argv[1], "arastar") == 0) { // hack to peal off extra ARA* argument
 		argv++;
 		argc--;
 	}
 
-	string cost = argc == 2 ? "unit" : argv[2];
+//	string cost = argc == 2 ? "unit" : argv[2];
+	string cost = "unit";
 	Tiles g(cin, cost);
 	Timer timer;
 
@@ -77,7 +77,7 @@ int main(int argc, char *argv[])
 	Tiles::Blind blind(&g);
 	if (argc >= 4 && (strcmp(argv[3], "blind") == 0)) {
 		g.set_heuristic(&blind);
-	} else if (argc >= 4 && (strcmp(argv[3], "pd") == 0)){
+	} else if (argc >= 4 && (strcmp(argv[3], "pd") == 0)) {
 		g.set_heuristic(&pd);
 		pd.initDatabases();
 	} else {
@@ -97,18 +97,22 @@ int main(int argc, char *argv[])
 	unsigned int closed_hash = 1;
 	unsigned int n_threads = 1; // Let's just type the number of threads rather than doing cool stuff.
 	unsigned int dist_hash = 0;
-	if (argc >= 5 && sscanf(argv[4], "hash-%u-%u-%u", &closed_hash, &n_threads, & dist_hash) == 3) {
+
+	for (int i = 1; i < argc; ++i) {
+		if (sscanf(argv[i], "hash-%u-%u-%u", &closed_hash, &n_threads,
+				&dist_hash) == 3) {
+			break;
+		}
 	}
+
 	printf("hash = %u, %u, %u\n", closed_hash, n_threads, dist_hash);
 	g.set_closed_hash(closed_hash);
 	g.set_n_threads(n_threads);
 	g.set_dist_hash(dist_hash);
 
-
 #if defined(NDEBUG)
 	timeout(timelimit);
 #endif	// NDEBUG
-
 	timer.start();
 	path = search->search(&timer, g.initial_state());
 	timer.stop();
@@ -116,12 +120,10 @@ int main(int argc, char *argv[])
 #if defined(NDEBUG)
 	timeout_stop();
 #endif	// NDEBUG
-
 	search->output_stats();
 
 	/* Print the graph to the terminal */
 //	g.print(cout, path);
-
 	if (path) {
 		printf("cost: %f\n", (double) path->at(0)->get_g() / fp_one);
 		cout << "length: " << path->size() << endl;

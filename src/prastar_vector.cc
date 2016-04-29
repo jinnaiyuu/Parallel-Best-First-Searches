@@ -197,6 +197,7 @@ void PRAStarVector::PRAStarVectorThread::send_state(State *c) {
 	assert(p->n_threads != 1 || self_add);
 
 	if (self_add) {
+		++self_push;
 		State *dup = closed.lookup(c);
 		if (dup) {
 			if (dup->get_g() > c->get_g()) {
@@ -208,7 +209,6 @@ void PRAStarVector::PRAStarVectorThread::send_state(State *c) {
 			}
 			delete c;
 		} else {
-			++self_push;
 			open.add(c);
 			closed.add(c);
 		}

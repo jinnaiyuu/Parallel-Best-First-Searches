@@ -210,6 +210,7 @@ list<State*> *PQVectorOpenList::states(void) {
 }
 
 void PQVectorOpenList::print_quality(void) {
+
 	printf("quality ");
 	for (unsigned int i = 0; i < node_quality.size(); ++i) {
 		printf("%u ", node_quality[i]);

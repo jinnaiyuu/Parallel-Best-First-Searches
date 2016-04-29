@@ -22,11 +22,10 @@
 
 using namespace std;
 
-
 // So far only single hash.
 void TilesState::compute_closed_hash(void) {
 	Tiles * t = static_cast<Tiles*>(domain);
-	switch(t->get_closed_hash()) {
+	switch (t->get_closed_hash()) {
 	case 0: // Perfect Hash
 //		printf("perf closed\n");
 		hash_val = perfect_hash(t->get_n_threads());
@@ -147,52 +146,113 @@ unsigned int TilesState::get_blank(void) const {
 }
 
 void TilesState::init_zbrhash() {
-/*	size = tiles.size();
-	for (unsigned int num = 0; num < size; ++num) {
-		for (unsigned int pos = 0; pos < size; ++pos) {
-			if (num == 0) {
-				zbr_table[num][pos] = 0;
-			} else {
-				zbr_table[num][pos] = rand(); // 0 to 255
-			}
-		}
-	}*/
+	/*	size = tiles.size();
+	 for (unsigned int num = 0; num < size; ++num) {
+	 for (unsigned int pos = 0; pos < size; ++pos) {
+	 if (num == 0) {
+	 zbr_table[num][pos] = 0;
+	 } else {
+	 zbr_table[num][pos] = rand(); // 0 to 255
+	 }
+	 }
+	 }*/
 	init_zbrhash_block();
 	printf("block zbrhash\n");
 	/*
- 	for (int num = 0; num < 16; ++num) {
-		for (int pos = 0; pos < 16; ++pos) {
-			printf("(%d,%d) = %d\n", num, pos, zbr_table[num][pos]);
-		}
-	}
-	*/
+	 for (int num = 0; num < 16; ++num) {
+	 for (int pos = 0; pos < 16; ++pos) {
+	 printf("(%d,%d) = %d\n", num, pos, zbr_table[num][pos]);
+	 }
+	 }
+	 */
 }
 
 void TilesState::init_zbrhash_block() {
+	Tiles * t = static_cast<Tiles*>(domain);
+	unsigned int h = t->get_dist_hash();
+
 	size = tiles.size();
-	int js[4] = { 0, 2, 8, 10 };
-	for (int i = 1; i < size; ++i) {
-		for (int j = 0; j < 4; ++j) {
-			int r = random();
-			zbr_table[i][js[j]] = r; // zbr[number][place]
-			zbr_table[i][js[j] + 1] = r;
-			zbr_table[i][js[j] + 4] = r;
-			zbr_table[i][js[j] + 4 + 1] = r;
+
+	if (h == 0) {
+		for (int i = 1; i < size; ++i) {
+			for (int j = 0; j < size; ++j) {
+				int r = random();
+				zbr_table[i][j] = r; // zbr[number][place]
+			}
 		}
+	} else if (h == 2 || h == 3) {
+		if (size == 16) {
+			int js[4] = { 0, 2, 8, 10 };
+			for (int i = 1; i < size; ++i) {
+				for (int j = 0; j < 4; ++j) {
+					int r = random();
+					zbr_table[i][js[j]] = r; // zbr[number][place]
+					zbr_table[i][js[j] + 1] = r;
+					zbr_table[i][js[j] + 4] = r;
+					zbr_table[i][js[j] + 4 + 1] = r;
+				}
+			}
+
+		} else {
+			int a[5] = { 0, 1, 5, 6, 10 };
+			int b[5] = { 15, 16, 20, 21, 22 };
+			int c[5] = { 14, 18, 19, 23, 24 };
+			int d[5] = { 2, 3, 4, 8, 9 };
+			int e[5] = { 7, 11, 12, 13, 17 };
+
+			for (int i = 1; i < size; ++i) {
+				int r = random();
+				for (int j = 0; j < 5; ++j) {
+					zbr_table[i][a[j]] = r; // zbr[number][place]
+				}
+				r = random();
+				for (int j = 0; j < 5; ++j) {
+					zbr_table[i][b[j]] = r; // zbr[number][place]
+				}
+				r = random();
+				for (int j = 0; j < 5; ++j) {
+					zbr_table[i][c[j]] = r; // zbr[number][place]
+				}
+				r = random();
+				for (int j = 0; j < 5; ++j) {
+					zbr_table[i][d[j]] = r; // zbr[number][place]
+				}
+				r = random();
+				for (int j = 0; j < 5; ++j) {
+					zbr_table[i][d[j]] = r; // zbr[number][place]
+				}
+			}
+
+		}
+	} else {
+		assert(false);
 	}
 }
 
 unsigned int TilesState::dist_hash(void) {
 	Tiles * t = static_cast<Tiles*>(domain);
 	unsigned int hash = 0;
-	switch(t->get_dist_hash()) {
+	switch (t->get_dist_hash()) {
 	case 0:
 //		printf("zobrist hash\n");
-		hash =  zobrist_hash();
+		hash = zobrist_hash();
 		break;
 	case 1:
 //		printf("residual\n");
-		hash =  perf_residual_hash(); // Simple Simple hash
+		hash = perf_residual_hash(); // Permutation Hash
+		break;
+	case 2:
+		// Abstract Zobrist Hashing
+//		printf("zobrist hash\n");
+		hash = zobrist_hash();
+		break;
+	case 3:
+		// Abstract Zobrist Hashing for 24 Puzzle
+//		printf("zobrist hash\n");
+		hash = zobrist_hash();
+		break;
+	case 9:
+		hash = 0;
 		break;
 	default:
 		assert(false);
