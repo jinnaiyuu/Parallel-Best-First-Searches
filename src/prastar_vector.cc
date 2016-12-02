@@ -260,6 +260,12 @@ void PRAStarVector::PRAStarVectorThread::run(void) {
 
 	while (!p->is_done()) {
 
+		// Double lock HDA*
+//		if (mutex.try_lock()) {
+////			printf("locked\n");
+//			mutex.unlock();
+//		}
+
 		State *s = take();
 		if (s == NULL)
 			continue;

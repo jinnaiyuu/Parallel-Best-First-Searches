@@ -49,7 +49,8 @@ private:
 	// Hash for distribution
 	unsigned int zobrist_hash(void); // disth = 0
 	unsigned int perf_residual_hash(void); // disth = 1
-
+	unsigned int random_dist(void);
+	unsigned int goha(void);
 	vector<unsigned int> tiles;
 	unsigned int blank;
 	uint64_t hash_val;

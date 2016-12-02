@@ -251,6 +251,14 @@ unsigned int TilesState::dist_hash(void) {
 //		printf("zobrist hash\n");
 		hash = zobrist_hash();
 		break;
+	case 4:
+//		printf("random_dist\n");
+		hash = random_dist();
+		break;
+	case 5:
+//		printf("goha\n");
+		hash = goha();
+		break;
 	case 9:
 		hash = 0;
 		break;
@@ -275,6 +283,21 @@ unsigned int TilesState::zobrist_hash(void) {
 // This is actually just a perfect hash returning.
 unsigned int TilesState::perf_residual_hash(void) {
 	return perfect_hash(1);
+}
+
+// This is not a hash function, thus incurs duplicates.
+unsigned int TilesState::random_dist(void) {
+	return rand();
+}
+
+// This is not a hash function, thus incurs duplicates.
+unsigned int TilesState::goha(void) {
+	double phash = (double) perfect_hash(1);
+	double golden = (sqrt(5) - 1.0) / 2.0;
+	double r = (phash * golden - floor(phash * golden)) * 16.0;
+//	printf("phash=%.1f, phash*golden=%.1f, floor()=%.1f, r=%.1f, rint=%u\n", phash,
+//			phash * golden, floor(phash * golden), r, (unsigned int) r);
+	return (unsigned int) r;
 }
 
 unsigned int TilesState::size;
