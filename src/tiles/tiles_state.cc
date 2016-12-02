@@ -25,8 +25,7 @@ using namespace std;
 // This technique is from Korf, R.E. and Schultze P, "Large-Scale
 // Parallel Breadth-First Search, AAAI-05.
 //
-void TilesState::compute_hash(void)
-{
+void TilesState::compute_hash(void) {
 	unsigned int bits = 0;
 	const Tiles *t = static_cast<const Tiles *>(domain);
 	const vector<uint64_t> *ones = t->get_ones();
@@ -43,26 +42,17 @@ void TilesState::compute_hash(void)
 	}
 }
 
-
 TilesState::TilesState(SearchDomain *d, State *parent, fp_type c, fp_type g,
-		       fp_type h_val, vector<unsigned int> tiles,
-		       unsigned int blank)
-	: State(d, parent, c, g),
-	  tiles(tiles),
-	  blank(blank)
-{
+		fp_type h_val, vector<unsigned int> tiles, unsigned int blank) :
+		State(d, parent, c, g), tiles(tiles), blank(blank) {
 	this->h = h_val;
 	compute_hash();
 	init_zbrhash();
 }
 
-
 TilesState::TilesState(SearchDomain *d, State *parent, fp_type c, fp_type g,
-		       vector<unsigned int> t, unsigned int b)
-	: State(d, parent, c, g),
-	  tiles(t),
-	  blank(b)
-{
+		vector<unsigned int> t, unsigned int b) :
+		State(d, parent, c, g), tiles(t), blank(b) {
 	assert(t[b] == 0);
 	if (domain->get_heuristic())
 		this->h = domain->get_heuristic()->compute(this);
@@ -73,32 +63,24 @@ TilesState::TilesState(SearchDomain *d, State *parent, fp_type c, fp_type g,
 	init_zbrhash();
 }
 
-
 /**
  * Test if the tiles are in order.
  */
-bool TilesState::is_goal(void)
-{
-	Tiles * t= static_cast<Tiles*>(domain);
+bool TilesState::is_goal(void) {
+	Tiles * t = static_cast<Tiles*>(domain);
 
 	return t->is_goal(this);
 }
 
-
-uint64_t TilesState::hash(void) const
-{
+uint64_t TilesState::hash(void) const {
 	return hash_val;
 }
 
-
-State *TilesState::clone(void) const
-{
+State *TilesState::clone(void) const {
 	return new TilesState(domain, parent, c, g, tiles, blank);
 }
 
-
-void TilesState::print(ostream &o) const
-{
+void TilesState::print(ostream &o) const {
 	Tiles *t = static_cast<Tiles*>(domain);
 	unsigned int i = 0;
 
@@ -117,8 +99,7 @@ void TilesState::print(ostream &o) const
 /**
  * Test if two states are the same configuration.
  */
-bool TilesState::equals(State *s) const
-{
+bool TilesState::equals(State *s) const {
 	TilesState *other = static_cast<TilesState *>(s);
 
 	for (unsigned int i = 0; i < tiles.size(); i += 1)
@@ -131,37 +112,69 @@ bool TilesState::equals(State *s) const
 /**
  * Get the tile vector.
  */
-const vector<unsigned int> *TilesState::get_tiles(void) const
-{
+const vector<unsigned int> *TilesState::get_tiles(void) const {
 	return &tiles;
 }
 
 /**
  * Get the blank position.
  */
-unsigned int TilesState::get_blank(void) const
-{
+unsigned int TilesState::get_blank(void) const {
 	return blank;
 }
 
-
-void TilesState::init_zbrhash() {
-  for (int num = 0; num < 16; ++num) {
-    for (int pos = 0; pos < 16; ++pos) {
-      if (num == 0) {
-	zbr_table[num][pos] = 0;
-      } else {
-	zbr_table[num][pos] = rand();
-      }
-    }
-  }
+unsigned int TilesState::dist_hash(int dist, int n_threads) {
+	switch (dist) {
+	case 0:
+		return zbrhash() % n_threads;
+		break;
+	case 1:
+		return hash_val % n_threads;
+	case 2:
+		return random_dist() % n_threads;
+		break;
+	case 3:
+		return goha(n_threads);
+		break;
+	default:
+		return 0;
+		break;
+	}
 }
 
-unsigned int TilesState::zbrhash(void) {
-  unsigned int zbr = 0;
-  for (int pos = 0; pos < 16; ++pos) {
-    zbr = zbr ^ zbr_table[tiles[pos]][pos];
-  }
-  //  printf("zbr = %d\n", zbr);
-  return zbr;
+void TilesState::init_zbrhash() {
+	for (int num = 0; num < 16; ++num) {
+		for (int pos = 0; pos < 16; ++pos) {
+			if (num == 0) {
+				zbr_table[num][pos] = 0;
+			} else {
+				zbr_table[num][pos] = rand();
+			}
+		}
+	}
+}
+
+unsigned int TilesState::zbrhash() {
+	unsigned int zbr = 0;
+	for (int pos = 0; pos < 16; ++pos) {
+		zbr = zbr ^ zbr_table[tiles[pos]][pos];
+	}
+	//  printf("zbr = %d\n", zbr);
+	return zbr;
+}
+
+unsigned int TilesState::random_dist() {
+	return rand();
+}
+
+unsigned int TilesState::goha(int n_threads) {
+	double g = 0.6180339887;
+	unsigned int kappa = 0;
+	for (int pos = 0; pos < 16; ++pos) {
+		kappa = tiles[pos];
+		kappa = kappa << 4;
+	}
+	unsigned int d = floor(
+			(double) n_threads * ((double) kappa * g - (double) floor(kappa * g)));
+	return d;
 }

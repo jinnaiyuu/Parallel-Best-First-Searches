@@ -205,10 +205,9 @@ void PRAStar::PRAStarThread::send_state(State *c)
 {
 	unsigned long hash =
 		p->use_abstraction
-		? p->project->project(c)
-//		: c->zbrhash();
-				: c->hash();
-	unsigned int dest_tid = threads->at(hash % p->n_threads)->get_id();
+		? p->project->project(c) % p->n_threads
+		: c->dist_hash(p->dist, p->n_threads);
+	unsigned int dest_tid = threads->at(hash)->get_id();
 	bool self_add = dest_tid == this->get_id();
 
 	assert (p->n_threads != 1 || self_add);
@@ -319,14 +318,16 @@ PRAStar::PRAStar(unsigned int n_threads,
 		 bool use_abst,
 		 bool a_send,
 		 bool a_recv,
-		 unsigned int max_e)
+		 unsigned int max_e,
+		 unsigned int dist)
 	: n_threads(n_threads),
 	  bound(fp_infinity - 100), // adhoc minus to prevent overflow.
 	  project(NULL),
 	  use_abstraction(use_abst),
 	  async_send(a_send),
 	  async_recv(a_recv),
-	  max_exp(max_e)
+	  max_exp(max_e),
+	  dist(dist)
 {
 	if (max_e != 0 && !async_send) {
 		cerr << "Max expansions must be zero for synchronous sends"

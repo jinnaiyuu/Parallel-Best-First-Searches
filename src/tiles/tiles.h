@@ -43,6 +43,9 @@ public:
 	unsigned int get_width(void) const;
  	unsigned int get_height(void) const;
 
+ 	void set_print_order(bool);
+ 	bool print_order;
+
 	class ManhattanDist : public Heuristic {
 	public:
 		ManhattanDist(const SearchDomain *d);

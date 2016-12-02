@@ -9,7 +9,6 @@
  * \date 2008-11-11
  */
 
-
 #include <assert.h>
 #include <math.h>
 #include <string.h>
@@ -28,38 +27,45 @@
 #include "util/timeout.h"
 #include "div_merge_project.h"
 
-
 using namespace std;
 
-int main(int argc, char *argv[])
-{
-	unsigned int timelimit = 10000000;	// seconds
+int main(int argc, char *argv[]) {
+	unsigned int timelimit = 10000000; // seconds
 	vector<State *> *path;
 	Search *search = get_search(argc, argv);
 
 	// Delay Option: Intentionally delaying each expansion by adding useless calculation.
 	int delay = 0;
 	if (argc > 2 && sscanf(argv[2], "-d-%d", &delay) == 1) {
-	  argv++;
-	  argc--;
+		argv++;
+		argc--;
 	}
 	search->set_delay(delay);
-       	// Overrun Option: Overrun after finding the optimal solution.
+	// Overrun Option: Overrun after finding the optimal solution.
 	// Search all nodes with f value smaller than solution cost + overrun.
 	int overrun = 0;
 	if (argc > 2 && sscanf(argv[2], "-o-%d", &overrun) == 1) {
-	  argv++;
-	  argc--;
+		argv++;
+		argc--;
 	}
 	search->set_overrun(overrun);
 
-	if (strcmp(argv[1], "arastar") == 0) {	// hack to peal off extra ARA* argument
+	int print_order = 0;
+	if (argc > 2 && sscanf(argv[2], "-p-%d", &print_order) == 1) {
+		argv++;
+		argc--;
+		printf("printorder%d\n", print_order);
+	}
+
+	if (strcmp(argv[1], "arastar") == 0) { // hack to peal off extra ARA* argument
 		argv++;
 		argc--;
 	}
 	string cost = argc == 2 ? "unit" : argv[2];
 	Tiles g(cin, cost);
 	Timer timer;
+
+	g.set_print_order(print_order);
 
 	Projection *project;
 	if (nblocks == 0) {
@@ -75,7 +81,7 @@ int main(int argc, char *argv[])
 	} else {
 		cerr << "Invalid abstraction size: " << nblocks << endl;
 		cerr << "15-puzzle: 240=1tile, 3360=2tile" << endl;
-		exit(EXIT_FAILURE);
+		exit (EXIT_FAILURE);
 	}
 
 //	DivMergeProject project(4, &__project);
@@ -86,7 +92,6 @@ int main(int argc, char *argv[])
 	Tiles::ManhattanDist manhattan(&g);
 	manhattan.set_weight(weight);
 	g.set_heuristic(&manhattan);
-
 
 #if defined(NDEBUG)
 	timeout(timelimit);
@@ -107,25 +112,24 @@ int main(int argc, char *argv[])
 	printf("overrun = %d\n", search->get_overrun());
 	/* Print the graph to the terminal */
 //	g.print(cout, path);
-
 	if (path) {
 		printf("cost: %f\n", (double) path->at(0)->get_g() / fp_one);
 		cout << "length: " << path->size() << endl;
 
 		// Make sure that the heuristic was actually admissible!
 		/*
-		for (unsigned int i = path->size() - 1; i >= 0; i -= 1) {
-#if !defined(NDEBUG)
-			State *s = path->at(i);
-			fp_type togo = path->at(0)->get_g() - s->get_g();
-			assert(s->get_h() <= togo);
-#endif
-			if (i > 0)
-				assert(s->get_h() > 0);
-			if (i == 0)
-				break;
-		}
-		*/
+		 for (unsigned int i = path->size() - 1; i >= 0; i -= 1) {
+		 #if !defined(NDEBUG)
+		 State *s = path->at(i);
+		 fp_type togo = path->at(0)->get_g() - s->get_g();
+		 assert(s->get_h() <= togo);
+		 #endif
+		 if (i > 0)
+		 assert(s->get_h() > 0);
+		 if (i == 0)
+		 break;
+		 }
+		 */
 		for (unsigned int i = 0; i < path->size(); i += 1)
 			delete path->at(i);
 		delete path;
@@ -139,9 +143,10 @@ int main(int argc, char *argv[])
 	cout << "expanded: " << search->get_expanded() << endl;
 
 //#ifdef ANALYZE_ORDER
-       	g.dumpOrder(32); // Ad hoc
+	if (g.print_order) {
+		g.dumpOrder(32); // Ad hoc
+	}
 //#endif
-	
 
 	if (project)
 		delete project;

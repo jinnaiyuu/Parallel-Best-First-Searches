@@ -35,7 +35,8 @@ public:
 		bool use_abst,
 		bool async_send,
 		bool async_recv,
-		unsigned int max_exp);
+		unsigned int max_exp,
+		unsigned int dist = 0);
 
         virtual ~PRAStar(void);
 
@@ -147,6 +148,10 @@ private:
 	/* Max expansions before flushing the send queue.  If we are
 	 * doing synchronous sends, this will be zero. */
 	unsigned int max_exp;
+
+	// determines which hash function to use
+	unsigned int dist;
+
 
 	/* Statistics */
 	double time_spinning;

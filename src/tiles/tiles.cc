@@ -9,8 +9,7 @@
  * \date 2008-11-03
  */
 
-#define ANALYZE_ORDER
-
+//#define ANALYZE_ORDER
 #include <assert.h>
 #include <math.h>
 #include <stdlib.h>
@@ -38,9 +37,8 @@ using namespace std;
  * the 0th tile (the blank).  The next number read is the position of
  * the 1 tile, etc.
  */
-Tiles::Tiles(istream &in, string c)
-  : cost(get_cost_function_by_name(c)), globalOrder(0)
-{
+Tiles::Tiles(istream &in, string c) :
+		cost(get_cost_function_by_name(c)), globalOrder(0), print_order(false) {
 	unsigned int pos;
 	unsigned int g_blank = 0;
 	char buff[1024];
@@ -50,10 +48,10 @@ Tiles::Tiles(istream &in, string c)
 	in >> height;
 	in >> width;
 
-/*
-  cout << "height = " << height << endl;
-  cout << "width = " << width << endl;
-*/
+	/*
+	 cout << "height = " << height << endl;
+	 cout << "width = " << width << endl;
+	 */
 
 	assert((width * height - 1) <= (sizeof(pow) * 8));
 	// 2^(w*h-1)
@@ -114,42 +112,39 @@ Tiles::Tiles(istream &in, string c)
 	log_node_order = new LogNodeOrder[32]; // Ad hoc
 }
 
-const vector<uint64_t> *Tiles::get_ones() const
-{
+const vector<uint64_t> *Tiles::get_ones() const {
 	return &ones;
 }
 
-const vector<uint64_t> *Tiles::get_fact_ary() const
-{
+const vector<uint64_t> *Tiles::get_fact_ary() const {
 	return &fact_ary;
 }
 
+/**
+ * Create an arbitrary puzzle.  You can't use the starting state of
+ * this, it is just really for testing purposes.
+ */
+Tiles::Tiles(unsigned int w, unsigned int h) :
+		width(w), height(h), cost(get_cost_function_by_name("")), print_order(
+				false) {
+}
 
 /**
  * Create an arbitrary puzzle.  You can't use the starting state of
  * this, it is just really for testing purposes.
  */
-Tiles::Tiles(unsigned int w, unsigned int h)
-	  : width(w), height(h), cost(get_cost_function_by_name("")) { }
-
-
-/**
- * Create an arbitrary puzzle.  You can't use the starting state of
- * this, it is just really for testing purposes.
- */
-Tiles::Tiles(unsigned int w, unsigned int h, string c)
-	  : width(w), height(h), cost(get_cost_function_by_name(c)) { }
-
+Tiles::Tiles(unsigned int w, unsigned int h, string c) :
+		width(w), height(h), cost(get_cost_function_by_name(c)), print_order(
+				false) {
+}
 
 /**
  * Destructor.
  */
-Tiles::~Tiles(void)
-{
+Tiles::~Tiles(void) {
 	if (goal)
 		delete goal;
 }
-
 
 /**
  * Get the initial state.
@@ -157,38 +152,31 @@ Tiles::~Tiles(void)
  * This will be NULL if the puzzle was constructed with the 2-argument
  * width-by-height constructor.
  */
-State *Tiles::initial_state(void)
-{
+State *Tiles::initial_state(void) {
 	return new TilesState(this, NULL, 0, 0, initial, initial_blank);
 }
-
-
 
 /**
  * Get the array for a child with a blank at index 'n' when the
  * parent's blank was at index 'o'.
  */
 vector<unsigned int> Tiles::child(const vector<unsigned int> *tiles,
-				  unsigned int o,
-				  unsigned int n)
-{
+		unsigned int o, unsigned int n) {
 	vector<unsigned int> t = *tiles;
 	t[o] = t[n];
 	t[n] = 0;
 	return t;
 }
 
-vector<State *> *Tiles::expand(State *s)
-{
-  //  printf("Tiles::expand(State)\n");
-  expand(s, 0);
+vector<State *> *Tiles::expand(State *s) {
+	//  printf("Tiles::expand(State)\n");
+	expand(s, 0);
 }
 /**
  * Expand a state, giving its children.
  */
-vector<State *> *Tiles::expand(State *s, int thread_id)
-{
-  //  printf("Tiles::expand(State, int) %d\n", thread_id);
+vector<State *> *Tiles::expand(State *s, int thread_id) {
+	//  printf("Tiles::expand(State, int) %d\n", thread_id);
 	TilesState *t = static_cast<TilesState *>(s);
 	Tiles *tiles_domain = static_cast<Tiles *>(t->get_domain());
 	TilesCostFunction &cost_fun = tiles_domain->cost;
@@ -199,52 +187,43 @@ vector<State *> *Tiles::expand(State *s, int thread_id)
 	unsigned int row = blank / width;
 
 	/*
-	for (int i = 0; i < tiles->size(); ++i) {
-	  printf("%x", (*tiles)[i]);
-	}
-	printf("\n");        
-	printf("id = %d\n", thread_id);
-	*/
+	 for (int i = 0; i < tiles->size(); ++i) {
+	 printf("%x", (*tiles)[i]);
+	 }
+	 printf("\n");
+	 printf("id = %d\n", thread_id);
+	 */
 	// Global Node Expansion Order
-#ifdef ANALYZE_ORDER
-	log_node_order[thread_id].addStateInfo(globalOrder.fetch_add(1), tiles, s->get_f(), -1);
-#endif
-       
+	if (print_order) {
+		log_node_order[thread_id].addStateInfo(globalOrder.fetch_add(1), tiles,
+				s->get_f(), -1);
+	}
+
 	TilesState *gp = static_cast<TilesState *>(s->get_parent());
 
 	if (col > 0 && (!gp || gp->get_blank() != blank - 1)) {
 		fp_type cost = FIXED_OF_DOUBLE(cost_fun(tiles->at(blank - 1)));
-		children->push_back(new TilesState(this, s, cost,
-						   s->get_g() + cost,
-						   child(tiles, blank,
-							 blank - 1),
-						   blank - 1));
+		children->push_back(
+				new TilesState(this, s, cost, s->get_g() + cost,
+						child(tiles, blank, blank - 1), blank - 1));
 	}
 	if (col < width - 1 && (!gp || gp->get_blank() != blank + 1)) {
 		fp_type cost = FIXED_OF_DOUBLE(cost_fun(tiles->at(blank + 1)));
-		children->push_back(new TilesState(this, s, cost,
-						   s->get_g() + cost,
-						   child(tiles, blank,
-							 blank + 1),
-						   blank + 1));
+		children->push_back(
+				new TilesState(this, s, cost, s->get_g() + cost,
+						child(tiles, blank, blank + 1), blank + 1));
 	}
 	if (row > 0 && (!gp || gp->get_blank() != blank - width)) {
-		fp_type cost =
-			FIXED_OF_DOUBLE(cost_fun(tiles->at(blank - width)));
-		children->push_back(new TilesState(this, s, cost,
-						   s->get_g() + cost,
-						   child(tiles, blank,
-							 blank - width),
-						   blank - width));
+		fp_type cost = FIXED_OF_DOUBLE(cost_fun(tiles->at(blank - width)));
+		children->push_back(
+				new TilesState(this, s, cost, s->get_g() + cost,
+						child(tiles, blank, blank - width), blank - width));
 	}
 	if (row < height - 1 && (!gp || gp->get_blank() != blank + width)) {
-		fp_type cost =
-			FIXED_OF_DOUBLE(cost_fun(tiles->at(blank + width)));
-		children->push_back(new TilesState(this, s, cost,
-						   s->get_g() + cost,
-						   child(tiles, blank,
-							 blank + width),
-						   blank + width));
+		fp_type cost = FIXED_OF_DOUBLE(cost_fun(tiles->at(blank + width)));
+		children->push_back(
+				new TilesState(this, s, cost, s->get_g() + cost,
+						child(tiles, blank, blank + width), blank + width));
 	}
 
 	return children;
@@ -253,16 +232,14 @@ vector<State *> *Tiles::expand(State *s, int thread_id)
 /**
  * Test if the given state is the goal state.
  */
-bool Tiles::is_goal(State *s) const
-{
+bool Tiles::is_goal(State *s) const {
 	return s->equals(goal);
 }
 
 /**
  * Print the initial state and goal state.
  */
-void Tiles::print(ostream &o) const
-{
+void Tiles::print(ostream &o) const {
 	cout << "Initial state:" << endl;
 	unsigned int i = 0;
 
@@ -280,20 +257,21 @@ void Tiles::print(ostream &o) const
 	goal->print(o);
 }
 
-unsigned int Tiles::get_width(void) const
-{
+unsigned int Tiles::get_width(void) const {
 	return width;
 }
 
-unsigned int Tiles::get_height(void) const
-{
+unsigned int Tiles::get_height(void) const {
 	return height;
+}
+
+void Tiles::set_print_order(bool p) {
+	print_order = p;
 }
 
 /**********************************************************************/
 
-void Tiles::ManhattanDist::init(const SearchDomain *d)
-{
+void Tiles::ManhattanDist::init(const SearchDomain *d) {
 	const Tiles *t = static_cast<const Tiles*>(d);
 	const vector<unsigned int> *goal = t->goal->get_tiles();
 
@@ -317,16 +295,14 @@ void Tiles::ManhattanDist::init(const SearchDomain *d)
 			int col = pos % width;
 			int row = pos / width;
 
-			table[(tile * (width * height)) + pos] =
-				(abs(goal_col - col) + abs(goal_row - row))
-				* cost;
+			table[(tile * (width * height)) + pos] = (abs(goal_col - col)
+					+ abs(goal_row - row)) * cost;
 		}
 	}
 }
 
-Tiles::ManhattanDist::ManhattanDist(const SearchDomain *d)
-	: Heuristic(d)
-{
+Tiles::ManhattanDist::ManhattanDist(const SearchDomain *d) :
+		Heuristic(d) {
 	init(d);
 }
 
@@ -334,27 +310,24 @@ Tiles::ManhattanDist::ManhattanDist(const SearchDomain *d)
  * Look up the Manhattan distance of the tile to its goal position in
  * the table.
  */
-int Tiles::ManhattanDist::lookup_dist(unsigned int num, unsigned int pos) const
-{
+int Tiles::ManhattanDist::lookup_dist(unsigned int num,
+		unsigned int pos) const {
 	return table[(num * (width * height)) + pos];
 }
 
-Tiles::ManhattanDist::~ManhattanDist(void)
-{
+Tiles::ManhattanDist::~ManhattanDist(void) {
 }
 
 /**
  * Compute the incremental Manhattan distance of a state.
  */
-fp_type Tiles::ManhattanDist::compute(State *state) const
-{
+fp_type Tiles::ManhattanDist::compute(State *state) const {
 	fp_type ret = 0;
 	TilesState *s = static_cast<TilesState *>(state);
 	State *p = s->get_parent();
 
 	if (p) {
-		TilesState *ptile =
-			static_cast<TilesState *>(p);
+		TilesState *ptile = static_cast<TilesState *>(p);
 		ret = compute_incr(s, ptile);
 //		assert(ret == compute_full(s));
 	} else
@@ -368,8 +341,7 @@ fp_type Tiles::ManhattanDist::compute(State *state) const
 /**
  * Compute the full manhattan distance of the given state.
  */
-fp_type Tiles::ManhattanDist::compute_full(TilesState *s) const
-{
+fp_type Tiles::ManhattanDist::compute_full(TilesState *s) const {
 	unsigned int dist = 0;
 	const vector<unsigned int> *tiles = s->get_tiles();
 
@@ -384,24 +356,20 @@ fp_type Tiles::ManhattanDist::compute_full(TilesState *s) const
  * Compute the incremental manhattan distance of the given state using
  * the heuristic value of the parent's state.
  */
-fp_type Tiles::ManhattanDist::compute_incr(TilesState *s,
-					   TilesState *p) const
-{
+fp_type Tiles::ManhattanDist::compute_incr(TilesState *s, TilesState *p) const {
 	unsigned int new_b = s->get_blank();
 	unsigned int par_b = p->get_blank();
 	unsigned int tile = p->get_tiles()->at(new_b);
 	fp_type ret = 0;
 
-	ret = p->get_h() + (lookup_dist(tile, par_b)
-			    - lookup_dist(tile, new_b));
+	ret = p->get_h() + (lookup_dist(tile, par_b) - lookup_dist(tile, new_b));
 	assert(ret >= 0);
 	return ret;
 }
 
 /**********************************************************************/
 
-Tiles::OneTileProject::OneTileProject(const SearchDomain *d)
-{
+Tiles::OneTileProject::OneTileProject(const SearchDomain *d) {
 	tiles = static_cast<const Tiles *>(d);
 	unsigned int size = tiles->width * tiles->height;
 	unsigned int id = 0;
@@ -424,13 +392,11 @@ Tiles::OneTileProject::OneTileProject(const SearchDomain *d)
 	}
 }
 
-Tiles::OneTileProject::~OneTileProject(void)
-{
+Tiles::OneTileProject::~OneTileProject(void) {
 	// nothing
 }
 
-unsigned int Tiles::OneTileProject::project(State *s) const
-{
+unsigned int Tiles::OneTileProject::project(State *s) const {
 	TilesState *ts = static_cast<TilesState *>(s);
 	const vector<unsigned int> *t = ts->get_tiles();
 	unsigned int size = t->size();
@@ -449,13 +415,12 @@ unsigned int Tiles::OneTileProject::project(State *s) const
 	return proj[blank][one];
 }
 
-unsigned int Tiles::OneTileProject::get_num_nblocks(void) const
-{
+unsigned int Tiles::OneTileProject::get_num_nblocks(void) const {
 	return nnblocks;
 }
 
-vector<unsigned int> Tiles::OneTileProject::get_neighbors(unsigned int b) const
-{
+vector<unsigned int> Tiles::OneTileProject::get_neighbors(
+		unsigned int b) const {
 	vector<unsigned int> ret;
 	unsigned int blank = unproj[b].first;
 	unsigned int one = unproj[b].second;
@@ -495,34 +460,28 @@ vector<unsigned int> Tiles::OneTileProject::get_neighbors(unsigned int b) const
 	return ret;
 }
 
-vector<unsigned int> Tiles::OneTileProject::get_successors(unsigned int b) const
-{
+vector<unsigned int> Tiles::OneTileProject::get_successors(
+		unsigned int b) const {
 	return get_neighbors(b);
 }
 
-vector<unsigned int> Tiles::OneTileProject::get_predecessors(unsigned int b) const
-{
+vector<unsigned int> Tiles::OneTileProject::get_predecessors(
+		unsigned int b) const {
 	return get_neighbors(b);
 }
 
 /**
  * Print the projection with the given ID, b.
  */
-void Tiles::OneTileProject::print(unsigned int b, ostream &o) const
-{
-	o << b << ": "
-	  << "blank=" << unproj[b].first
-	  << ", one=" << unproj[b].second
-	  << endl;
+void Tiles::OneTileProject::print(unsigned int b, ostream &o) const {
+	o << b << ": " << "blank=" << unproj[b].first << ", one="
+			<< unproj[b].second << endl;
 }
 
 /**********************************************************************/
 
-int Tiles::TwoTileProject::setup_proj(unsigned int id,
-				      unsigned int i,
-				      unsigned int j,
-				      unsigned int k)
-{
+int Tiles::TwoTileProject::setup_proj(unsigned int id, unsigned int i,
+		unsigned int j, unsigned int k) {
 	if (i == j || i == k || j == k)
 		return 0;
 
@@ -535,8 +494,7 @@ int Tiles::TwoTileProject::setup_proj(unsigned int id,
 	return 1;
 }
 
-Tiles::TwoTileProject::TwoTileProject(const SearchDomain *d)
-{
+Tiles::TwoTileProject::TwoTileProject(const SearchDomain *d) {
 	tiles = static_cast<const Tiles *>(d);
 	unsigned int size = tiles->width * tiles->height;
 	unsigned int id = 0;
@@ -555,13 +513,11 @@ Tiles::TwoTileProject::TwoTileProject(const SearchDomain *d)
 	}
 }
 
-Tiles::TwoTileProject::~TwoTileProject(void)
-{
+Tiles::TwoTileProject::~TwoTileProject(void) {
 	// nothing
 }
 
-unsigned int Tiles::TwoTileProject::project(State *s) const
-{
+unsigned int Tiles::TwoTileProject::project(State *s) const {
 	TilesState *ts = static_cast<TilesState *>(s);
 	const vector<unsigned int> *t = ts->get_tiles();
 	unsigned int size = t->size();
@@ -585,13 +541,12 @@ unsigned int Tiles::TwoTileProject::project(State *s) const
 	return proj[blank][one][two];
 }
 
-unsigned int Tiles::TwoTileProject::get_num_nblocks(void) const
-{
+unsigned int Tiles::TwoTileProject::get_num_nblocks(void) const {
 	return nnblocks;
 }
 
-vector<unsigned int> Tiles::TwoTileProject::get_neighbors(unsigned int b) const
-{
+vector<unsigned int> Tiles::TwoTileProject::get_neighbors(
+		unsigned int b) const {
 	vector<unsigned int> ret;
 	unsigned int blank = unproj[b][0];
 	unsigned int one = unproj[b][1];
@@ -640,36 +595,28 @@ vector<unsigned int> Tiles::TwoTileProject::get_neighbors(unsigned int b) const
 	return ret;
 }
 
-vector<unsigned int> Tiles::TwoTileProject::get_successors(unsigned int b) const
-{
+vector<unsigned int> Tiles::TwoTileProject::get_successors(
+		unsigned int b) const {
 	return get_neighbors(b);
 }
 
-vector<unsigned int> Tiles::TwoTileProject::get_predecessors(unsigned int b) const
-{
+vector<unsigned int> Tiles::TwoTileProject::get_predecessors(
+		unsigned int b) const {
 	return get_neighbors(b);
 }
 
 /**
  * Print the projection with the given ID, b.
  */
-void Tiles::TwoTileProject::print(unsigned int b, ostream &o) const
-{
-	o << b << ": "
-	  << "blank=" << unproj[b][0]
-	  << ", one=" << unproj[b][1]
-	  << ", two=" << unproj[b][2]
-	  << endl;
+void Tiles::TwoTileProject::print(unsigned int b, ostream &o) const {
+	o << b << ": " << "blank=" << unproj[b][0] << ", one=" << unproj[b][1]
+			<< ", two=" << unproj[b][2] << endl;
 }
-
 
 /**********************************************************************/
 
-int Tiles::TwoTileNoBlankProject::setup_proj(unsigned int id,
-					     unsigned int i,
-					     unsigned int j,
-					     unsigned int k)
-{
+int Tiles::TwoTileNoBlankProject::setup_proj(unsigned int id, unsigned int i,
+		unsigned int j, unsigned int k) {
 	if (i == j || i == k || j == k)
 		return 0;
 
@@ -682,19 +629,15 @@ int Tiles::TwoTileNoBlankProject::setup_proj(unsigned int id,
 	return 1;
 }
 
-static void swap(unsigned int *a, unsigned int *b)
-{
+static void swap(unsigned int *a, unsigned int *b) {
 	unsigned int t;
 	t = *a;
 	*a = *b;
 	*b = t;
 }
 
-void Tiles::TwoTileNoBlankProject::init(const SearchDomain *d,
-					unsigned int a,
-					unsigned int b,
-					unsigned int c)
-{
+void Tiles::TwoTileNoBlankProject::init(const SearchDomain *d, unsigned int a,
+		unsigned int b, unsigned int c) {
 	tiles = static_cast<const Tiles *>(d);
 	unsigned int size = tiles->width * tiles->height;
 	unsigned int id = 0;
@@ -731,27 +674,20 @@ void Tiles::TwoTileNoBlankProject::init(const SearchDomain *d,
 	}
 }
 
-
 Tiles::TwoTileNoBlankProject::TwoTileNoBlankProject(const SearchDomain *d,
-						    unsigned int a,
-						    unsigned int b,
-						    unsigned int c)
-{
+		unsigned int a, unsigned int b, unsigned int c) {
 	init(d, a, b, c);
 }
 
-Tiles::TwoTileNoBlankProject::TwoTileNoBlankProject(const SearchDomain *d)
-{
+Tiles::TwoTileNoBlankProject::TwoTileNoBlankProject(const SearchDomain *d) {
 	init(d, 1, 2, 3);
 }
 
-Tiles::TwoTileNoBlankProject::~TwoTileNoBlankProject(void)
-{
+Tiles::TwoTileNoBlankProject::~TwoTileNoBlankProject(void) {
 	// nothing
 }
 
-unsigned int Tiles::TwoTileNoBlankProject::project(State *s) const
-{
+unsigned int Tiles::TwoTileNoBlankProject::project(State *s) const {
 	TilesState *ts = static_cast<TilesState *>(s);
 	const vector<unsigned int> *t = ts->get_tiles();
 	unsigned int size = t->size();
@@ -775,13 +711,12 @@ unsigned int Tiles::TwoTileNoBlankProject::project(State *s) const
 	return proj[a][b][c];
 }
 
-unsigned int Tiles::TwoTileNoBlankProject::get_num_nblocks(void) const
-{
+unsigned int Tiles::TwoTileNoBlankProject::get_num_nblocks(void) const {
 	return nnblocks;
 }
 
-vector<unsigned int> Tiles::TwoTileNoBlankProject::get_neighbors(unsigned int block) const
-{
+vector<unsigned int> Tiles::TwoTileNoBlankProject::get_neighbors(
+		unsigned int block) const {
 	vector<unsigned int> ret;
 	unsigned int a = unproj[block][0];
 	unsigned int b = unproj[block][1];
@@ -834,7 +769,6 @@ vector<unsigned int> Tiles::TwoTileNoBlankProject::get_neighbors(unsigned int bl
 		else if (i != b && i != c)
 			ret.push_back(proj[i][b][c]);
 	}
-
 
 	//
 	// B
@@ -896,41 +830,31 @@ vector<unsigned int> Tiles::TwoTileNoBlankProject::get_neighbors(unsigned int bl
 			ret.push_back(proj[a][b][i]);
 	}
 
-
 	return ret;
 }
 
-vector<unsigned int> Tiles::TwoTileNoBlankProject::get_successors(unsigned int b) const
-{
+vector<unsigned int> Tiles::TwoTileNoBlankProject::get_successors(
+		unsigned int b) const {
 	return get_neighbors(b);
 }
 
-vector<unsigned int> Tiles::TwoTileNoBlankProject::get_predecessors(unsigned int b) const
-{
+vector<unsigned int> Tiles::TwoTileNoBlankProject::get_predecessors(
+		unsigned int b) const {
 	return get_neighbors(b);
 }
 
 /**
  * Print the projection with the given ID, b.
  */
-void Tiles::TwoTileNoBlankProject::print(unsigned int b, ostream &o) const
-{
-	o << b << ": "
-	  << a_tile << "=" << unproj[b][0]
-	  << ", " << b_tile<< "=" << unproj[b][1]
-	  << ", " << c_tile << "=" << unproj[b][2]
-	  << endl;
+void Tiles::TwoTileNoBlankProject::print(unsigned int b, ostream &o) const {
+	o << b << ": " << a_tile << "=" << unproj[b][0] << ", " << b_tile << "="
+			<< unproj[b][1] << ", " << c_tile << "=" << unproj[b][2] << endl;
 }
-
 
 /**********************************************************************/
 
-int Tiles::ThreeTileProject::setup_proj(unsigned int id,
-					unsigned int i,
-					unsigned int j,
-					unsigned int k,
-					unsigned int l)
-{
+int Tiles::ThreeTileProject::setup_proj(unsigned int id, unsigned int i,
+		unsigned int j, unsigned int k, unsigned int l) {
 	if (i == j || i == k || i == l || j == k || j == l || l == k)
 		return 0;
 
@@ -944,8 +868,7 @@ int Tiles::ThreeTileProject::setup_proj(unsigned int id,
 	return 1;
 }
 
-Tiles::ThreeTileProject::ThreeTileProject(const SearchDomain *d)
-{
+Tiles::ThreeTileProject::ThreeTileProject(const SearchDomain *d) {
 	tiles = static_cast<const Tiles *>(d);
 	unsigned int size = tiles->width * tiles->height;
 	unsigned int id = 0;
@@ -967,13 +890,11 @@ Tiles::ThreeTileProject::ThreeTileProject(const SearchDomain *d)
 	}
 }
 
-Tiles::ThreeTileProject::~ThreeTileProject(void)
-{
+Tiles::ThreeTileProject::~ThreeTileProject(void) {
 	// nothing
 }
 
-unsigned int Tiles::ThreeTileProject::project(State *s) const
-{
+unsigned int Tiles::ThreeTileProject::project(State *s) const {
 	TilesState *ts = static_cast<TilesState *>(s);
 	const vector<unsigned int> *t = ts->get_tiles();
 	unsigned int size = t->size();
@@ -1003,20 +924,15 @@ unsigned int Tiles::ThreeTileProject::project(State *s) const
 	return proj[blank][one][two][three];
 }
 
-unsigned int Tiles::ThreeTileProject::get_num_nblocks(void) const
-{
+unsigned int Tiles::ThreeTileProject::get_num_nblocks(void) const {
 	return nnblocks;
 }
 
 /* Get the neighbor ID for a state with blank, one, two, three, and
  * the blank moves to new_blank. */
-unsigned int
-Tiles::ThreeTileProject::get_neighbor(unsigned int blank,
-				      unsigned int one,
-				      unsigned int two,
-				      unsigned int three,
-				      unsigned int new_blank) const
-{
+unsigned int Tiles::ThreeTileProject::get_neighbor(unsigned int blank,
+		unsigned int one, unsigned int two, unsigned int three,
+		unsigned int new_blank) const {
 	// The blank swaps with the 1, 2 or 3 tile.
 	if (one == new_blank)
 		return proj[one][blank][two][three];
@@ -1029,9 +945,8 @@ Tiles::ThreeTileProject::get_neighbor(unsigned int blank,
 	return proj[new_blank][one][two][three];
 }
 
-
-vector<unsigned int> Tiles::ThreeTileProject::get_neighbors(unsigned int b) const
-{
+vector<unsigned int> Tiles::ThreeTileProject::get_neighbors(
+		unsigned int b) const {
 	vector<unsigned int> ret;
 	unsigned int blank = unproj[b][0];
 	unsigned int one = unproj[b][1];
@@ -1061,25 +976,20 @@ vector<unsigned int> Tiles::ThreeTileProject::get_neighbors(unsigned int b) cons
 	return ret;
 }
 
-vector<unsigned int> Tiles::ThreeTileProject::get_successors(unsigned int b) const
-{
+vector<unsigned int> Tiles::ThreeTileProject::get_successors(
+		unsigned int b) const {
 	return get_neighbors(b);
 }
 
-vector<unsigned int> Tiles::ThreeTileProject::get_predecessors(unsigned int b) const
-{
+vector<unsigned int> Tiles::ThreeTileProject::get_predecessors(
+		unsigned int b) const {
 	return get_neighbors(b);
 }
 
 /**
  * Print the projection with the given ID, b.
  */
-void Tiles::ThreeTileProject::print(unsigned int b, ostream &o) const
-{
-	o << b << ": "
-	  << "blank=" << unproj[b][0]
-	  << ", one=" << unproj[b][1]
-	  << ", two=" << unproj[b][2]
-	  << ", three=" << unproj[b][3]
-	  << endl;
+void Tiles::ThreeTileProject::print(unsigned int b, ostream &o) const {
+	o << b << ": " << "blank=" << unproj[b][0] << ", one=" << unproj[b][1]
+			<< ", two=" << unproj[b][2] << ", three=" << unproj[b][3] << endl;
 }

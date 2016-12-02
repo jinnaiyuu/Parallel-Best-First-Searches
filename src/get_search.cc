@@ -113,6 +113,7 @@ Search *get_search(int argc, char *argv[])
 	unsigned int max_e = 0;
 	unsigned int multiplier;
 	double bound;
+	unsigned int dist = 0;
 
 	if (argc > 1 && strcmp(argv[1], "astar") == 0) {
 		return new AStar();
@@ -148,6 +149,8 @@ Search *get_search(int argc, char *argv[])
 		return new PRAStar(threads, false, false, false, 0);
 	} else if (argc > 1 && sscanf(argv[1], "aprastar-%u-%u", &threads, &nblocks) == 2) {
 		return new PRAStar(threads, true, false, false, 0);
+	} else if (argc > 1 && sscanf(argv[1], "hdastar-%u-%u-%u", &max_e, &threads, &dist) == 3) {
+		return new PRAStar(threads, false, true, true, max_e, dist);
 	} else if (argc > 1 && sscanf(argv[1], "hdastar-%u-%u", &max_e, &threads) == 2) {
 		return new PRAStar(threads, false, true, true, max_e);
 	} else if (argc > 1 && sscanf(argv[1], "ahdastar-%u-%u-%u", &max_e, &threads, &nblocks) == 3) {

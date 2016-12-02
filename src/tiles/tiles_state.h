@@ -37,8 +37,14 @@ public:
 	const vector<unsigned int> *get_tiles(void) const;
 	unsigned int get_blank(void) const;
 
+
+	unsigned int dist_hash(int dist, int n_threads);
+
 	void init_zbrhash(void);
 	unsigned int zbrhash(void);
+	unsigned int random_dist(void);
+	unsigned int goha(int n_threads);
+
 private:
 	void compute_hash(void);
 	vector<unsigned int> tiles;
