@@ -40,8 +40,9 @@ public:
 
 	unsigned int dist_hash(int dist, int n_threads);
 
-	void init_zbrhash(void);
+//	void init_zbrhash(void);
 	unsigned int zbrhash(void);
+	unsigned int abstzbrhash(void);
 	unsigned int random_dist(void);
 	unsigned int goha(int n_threads);
 
@@ -51,7 +52,7 @@ private:
 	unsigned int blank;
 	uint64_t hash_val;
 	
-	unsigned int zbr_table[16][16]; // adhoc
+//	unsigned int zbr_table[16][16]; // adhoc
 };
 
 #endif	/* !_TILES_STATE_H_ */

@@ -32,8 +32,10 @@ public:
 			fp_type fa = a->get_f();
 			fp_type fb = b->get_f();
 
-			if (fa < fb) return true;
-			else if (fa > fb) return false;
+			if (fa < fb)
+				return true;
+			else if (fa > fb)
+				return false;
 			else {
 				fp_type ga = a->get_g();
 				fp_type gb = b->get_g();
@@ -44,13 +46,11 @@ public:
 		fp_type inline get_value(State *s) const {
 			return s->get_f();
 		}
-		void inline operator()(State *a, int i)
-		{
+		void inline operator()(State *a, int i) {
 			a->f_pq_index = i;
 		}
 
-		int inline operator()(State *a)
-		{
+		int inline operator()(State *a) {
 			return a->f_pq_index;
 		}
 	};
@@ -60,21 +60,22 @@ public:
 		int inline operator()(State *a, State *b) const {
 			fp_type fa = a->get_f_prime();
 			fp_type fb = b->get_f_prime();
-			if (fa < fb) return true;
-			else if (fa > fb) return false;
-			else return f_cmp(a, b);
+			if (fa < fb)
+				return true;
+			else if (fa > fb)
+				return false;
+			else
+				return f_cmp(a, b);
 		}
 
 		fp_type inline get_value(State *s) const {
 			return s->get_f_prime();
 		}
-		void inline operator()(State *a, int i)
-		{
+		void inline operator()(State *a, int i) {
 			a->f_prime_pq_index = i;
 		}
 
-		int inline operator()(State *a)
-		{
+		int inline operator()(State *a) {
 			return a->f_prime_pq_index;
 		}
 	private:
@@ -89,8 +90,10 @@ public:
 		int inline operator()(State *a, State *b) const {
 			fp_type fa = a->get_f_prime();
 			fp_type fb = b->get_f_prime();
-			if (fa < fb) return true;
-			else if (fa > fb) return false;
+			if (fa < fb)
+				return true;
+			else if (fa > fb)
+				return false;
 			else
 				/* If there is a tie then [a], the new
 				 * element, is not the predecessor. */
@@ -100,13 +103,11 @@ public:
 		fp_type inline get_value(State *s) const {
 			return s->get_f_prime();
 		}
-		void inline operator()(State *a, int i)
-		{
+		void inline operator()(State *a, int i) {
 			a->f_prime_pq_index = i;
 		}
 
-		int inline operator()(State *a)
-		{
+		int inline operator()(State *a) {
 			return a->f_prime_pq_index;
 		}
 	private:
@@ -121,21 +122,22 @@ public:
 		int inline operator()(State *a, State *b) const {
 			fp_type fa = a->get_f_prime();
 			fp_type fb = b->get_f_prime();
-			if (fa < fb) return true;
-			else if (fa > fb) return false;
-			else return !f_cmp(a, b);
+			if (fa < fb)
+				return true;
+			else if (fa > fb)
+				return false;
+			else
+				return !f_cmp(a, b);
 		}
 
 		fp_type inline get_value(State *s) const {
 			return s->get_f_prime();
 		}
-		void inline operator()(State *a, int i)
-		{
+		void inline operator()(State *a, int i) {
 			a->f_prime_pq_index = i;
 		}
 
-		int inline operator()(State *a)
-		{
+		int inline operator()(State *a) {
 			return a->f_prime_pq_index;
 		}
 	private:
@@ -181,7 +183,7 @@ public:
 	int f_pq_index;
 	int f_prime_pq_index;
 
-       	virtual unsigned int zbrhash(void) = 0;
+	virtual unsigned int dist_hash(int dist, int n_threads) = 0;
 };
 
 #endif	/* !_STATE_H_ */

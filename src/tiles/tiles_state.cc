@@ -47,7 +47,7 @@ TilesState::TilesState(SearchDomain *d, State *parent, fp_type c, fp_type g,
 		State(d, parent, c, g), tiles(tiles), blank(blank) {
 	this->h = h_val;
 	compute_hash();
-	init_zbrhash();
+//	init_zbrhash();
 }
 
 TilesState::TilesState(SearchDomain *d, State *parent, fp_type c, fp_type g,
@@ -60,7 +60,7 @@ TilesState::TilesState(SearchDomain *d, State *parent, fp_type c, fp_type g,
 		this->h = 0;
 	assert(this->h == 0 ? is_goal() : 1);
 	compute_hash();
-	init_zbrhash();
+//	init_zbrhash();
 }
 
 /**
@@ -129,35 +129,52 @@ unsigned int TilesState::dist_hash(int dist, int n_threads) {
 		return zbrhash() % n_threads;
 		break;
 	case 1:
-		return hash_val % n_threads;
+		return abstzbrhash() % n_threads;
+		break;
 	case 2:
+		return hash_val % n_threads;
+	case 3:
 		return random_dist() % n_threads;
 		break;
-	case 3:
+	case 4:
 		return goha(n_threads);
 		break;
 	default:
+		assert(false);
 		return 0;
 		break;
 	}
 }
 
-void TilesState::init_zbrhash() {
-	for (int num = 0; num < 16; ++num) {
-		for (int pos = 0; pos < 16; ++pos) {
-			if (num == 0) {
-				zbr_table[num][pos] = 0;
-			} else {
-				zbr_table[num][pos] = rand();
-			}
-		}
-	}
-}
+//void TilesState::init_zbrhash() {
+//	for (int num = 0; num < 16; ++num) {
+//		for (int pos = 0; pos < 16; ++pos) {
+//			if (num == 0) {
+//				zbr_table[num][pos] = 0;
+//			} else {
+//				zbr_table[num][pos] = rand();
+//			}
+//		}
+//	}
+//}
 
 unsigned int TilesState::zbrhash() {
+	const Tiles *t = static_cast<const Tiles *>(domain);
+
 	unsigned int zbr = 0;
 	for (int pos = 0; pos < 16; ++pos) {
-		zbr = zbr ^ zbr_table[tiles[pos]][pos];
+		zbr = zbr ^ t->zbr_table[tiles[pos]][pos];
+	}
+	//  printf("zbr = %d\n", zbr);
+	return zbr;
+}
+
+unsigned int TilesState::abstzbrhash() {
+	const Tiles *t = static_cast<const Tiles *>(domain);
+
+	unsigned int zbr = 0;
+	for (int pos = 0; pos < 16; ++pos) {
+		zbr = zbr ^ t->zbr_table[tiles[pos]][pos/8];
 	}
 	//  printf("zbr = %d\n", zbr);
 	return zbr;

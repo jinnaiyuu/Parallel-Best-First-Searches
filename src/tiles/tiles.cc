@@ -269,6 +269,18 @@ void Tiles::set_print_order(bool p) {
 	print_order = p;
 }
 
+void Tiles::init_zbrhash() {
+	for (int num = 0; num < 16; ++num) {
+		for (int pos = 0; pos < 16; ++pos) {
+			if (num == 0) {
+				zbr_table[num][pos] = 0;
+			} else {
+				zbr_table[num][pos] = rand();
+			}
+		}
+	}
+}
+
 /**********************************************************************/
 
 void Tiles::ManhattanDist::init(const SearchDomain *d) {

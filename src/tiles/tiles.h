@@ -43,6 +43,9 @@ public:
 	unsigned int get_width(void) const;
  	unsigned int get_height(void) const;
 
+	void init_zbrhash();
+	unsigned int zbr_table[16][16];
+
  	void set_print_order(bool);
  	bool print_order;
 
@@ -210,6 +213,7 @@ public:
 
 	const vector<uint64_t> *get_ones(void) const;
 	const vector<uint64_t> *get_fact_ary(void) const;
+
 
 	void dumpOrder(int thread_number){
 	  for (int i = 0; i < thread_number; ++i) {
