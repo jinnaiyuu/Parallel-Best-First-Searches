@@ -125,18 +125,21 @@ unsigned int TilesState::get_blank(void) const {
 
 unsigned int TilesState::dist_hash(int dist, int n_threads) {
 	switch (dist) {
-	case 0:
+	case distribution::Zobrist:
 		return zbrhash() % n_threads;
 		break;
-	case 1:
+	case distribution::AbstractZobrist:
 		return abstzbrhash() % n_threads;
 		break;
-	case 2:
+	case distribution::Permutation:
+		// PHDA* in Jinnai&Fukunaga 2017. Referred as ``HDA*'' by Burns et al. 2010.
 		return hash_val % n_threads;
-	case 3:
+		break;
+	case distribution::Random:
 		return random_dist() % n_threads;
 		break;
-	case 4:
+	case distribution::GOHA:
+		// Mahapatra, Nihar R., and Shantanu Dutt. 1997.
 		return goha(n_threads);
 		break;
 	default:
@@ -183,7 +186,7 @@ unsigned int TilesState::abstzbrhash() {
 unsigned int TilesState::random_dist() {
 	return rand();
 }
-
+// Mahapatra, Nihar R., and Shantanu Dutt. 1997.
 unsigned int TilesState::goha(int n_threads) {
 	double g = 0.6180339887;
 	unsigned int kappa = 0;

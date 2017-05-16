@@ -1,3 +1,9 @@
+# Modified 2016-2017
+This is the source code for AZHDA* and the algorithms described in:
+Jinnai Y, Fukunaga A. 2016. Abstract Zobrist Hashing: An Efficient Work Distribution Method for Parallel Best-First Search. Proc. 30th AAAI Conference on Artificial Intelligence (AAAI-16)
+Jinnai Y, Fukunaga A. 2017. A Graph-Partitioning Based Approach for Parallel Best-First Search. ICAPS 2017 Workshop on Heuristic and Search for Domain-Independent Planning (HSDIP).
+
+# Original README by PBNF authors
 This is the source code for PBNF and the algorithms described in:
 Ethan Burns, Sofia Lemons, Wheeler Ruml and Rong Zhou, "Best-First
 Heuristic Search for Multicore Machines", Journal of Artificial

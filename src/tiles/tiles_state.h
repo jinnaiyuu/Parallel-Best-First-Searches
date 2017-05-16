@@ -40,11 +40,19 @@ public:
 
 	unsigned int dist_hash(int dist, int n_threads);
 
-//	void init_zbrhash(void);
+	// List of hash functions
 	unsigned int zbrhash(void);
 	unsigned int abstzbrhash(void);
 	unsigned int random_dist(void);
 	unsigned int goha(int n_threads);
+
+	enum distribution {
+		Zobrist,
+		AbstractZobrist,
+		Permutation,
+		Random,
+		GOHA
+	};
 
 private:
 	void compute_hash(void);
