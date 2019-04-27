@@ -11,6 +11,7 @@
 
 #include <iostream>
 #include <vector>
+#include <assert.h>
 
 #include "grid_world.h"
 #include "grid_state.h"
@@ -112,6 +113,7 @@ int GridState::get_y(void) const
 	return y;
 }
 
-unsigned int GridState::dist_hash(void){
-  return hash();
+unsigned int GridState::dist_hash(int dist, int n_threads){
+  assert(dist == 0);
+  return hash() % n_threads;
 }

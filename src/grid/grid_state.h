@@ -33,7 +33,7 @@ public:
 	virtual int get_x(void) const;
 	virtual int get_y(void) const;
 	void init_zbrhash(void) {;};
-	unsigned int dist_hash(void);
+	unsigned int dist_hash(int dist, int n_threads);
 
 private:
 	int x, y;
