@@ -114,6 +114,21 @@ int GridState::get_y(void) const
 }
 
 unsigned int GridState::dist_hash(int dist, int n_threads){
-  assert(dist == 0);
-  return hash() % n_threads;
+  // cout << "dist=" << dist << endl;
+  switch(dist) {
+  case 0:
+    return hash() % n_threads;
+    break;
+  case 1:
+    const GridWorld *d;
+    d = static_cast<const GridWorld *>(domain);
+    
+    return ((x / 4) * d->get_height() + (y / 4)) % n_threads;    
+    break;
+  default:
+    assert(false);
+    // not implemented yet.
+    return hash() % n_threads;
+    break;
+  }  
 }

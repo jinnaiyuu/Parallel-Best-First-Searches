@@ -294,6 +294,7 @@ Search *get_search(int argc, char *argv[])
 		     << "\tprastar-<threads>" << endl
 		     << "\taprastar-<threads>-<nblocks>" << endl
 		     << "\thdastar-<max-expansions>-<threads>" << endl
+		     << "\thdastar-<max-expansions>-<threads>-<hashfunc>" << endl
 		     << "\tahdastar-<max-expansions>-<threads>-<nblocks>" << endl
 		     << "\tahdastar-<max-expansions>-<weight>-<threads>-<nblocks>" << endl
 		     << "\thdastar-syncsends-<threads>" << endl

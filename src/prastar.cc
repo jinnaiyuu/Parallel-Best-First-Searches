@@ -203,6 +203,7 @@ void PRAStar::PRAStarThread::do_sync_send(unsigned int dest_tid, State *c)
 
 void PRAStar::PRAStarThread::send_state(State *c)
 {
+  // cout << "p->dist=" << p->dist << endl;
 	unsigned long hash =
 		p->use_abstraction
 		? p->project->project(c) % p->n_threads
@@ -334,6 +335,7 @@ PRAStar::PRAStar(unsigned int n_threads,
 		     << endl;
 		abort();
 	}
+        cout << "prastar dist=" << dist << endl;
         done = false;
 }
 
