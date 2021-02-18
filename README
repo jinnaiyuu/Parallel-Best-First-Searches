@@ -2,8 +2,8 @@
 
 Code for Abstract Zobrist Hashing proposed in the following papers.
 
-[Jinnai Y, Fukunaga A. 2016. Abstract Zobrist Hashing: An Efficient Work Distribution Method for Parallel Best-First Search. Proc. 30th AAAI Conference on Artificial Intelligence (AAAI-16).](https://ojs.aaai.org/index.php/AAAI/article/download/10065/9924)
-[Jinnai Y, Fukunaga A. 2017. A Graph-Partitioning Based Approach for Parallel Best-First Search. ICAPS 2017 Workshop on Heuristic and Search for Domain-Independent Planning (HSDIP).](https://icaps17.icaps-conference.org/workshops/HSDIP/proceedings/icaps2017wshsdip_proceedings.pdf#page=39)
+[Jinnai Y, Fukunaga A. 2016. Abstract Zobrist Hashing: An Efficient Work Distribution Method for Parallel Best-First Search. Proc. 30th AAAI Conference on Artificial Intelligence.](https://ojs.aaai.org/index.php/AAAI/article/download/10065/9924)
+[Jinnai Y, Fukunaga A. 2017. A Graph-Partitioning Based Approach for Parallel Best-First Search. ICAPS 2017 Workshop on Heuristic and Search for Domain-Independent Planning.](https://icaps17.icaps-conference.org/workshops/HSDIP/proceedings/icaps2017wshsdip_proceedings.pdf#page=39)
 
 # Original README by PBNF authors
 
